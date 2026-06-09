@@ -64,12 +64,12 @@ Every milestone ends with a **Docs** step. Treat documentation as a deliverable,
 
 ### Milestone 0.1 — GitHub Repository Setup
 
-- [ ] Create GitHub repo `paperlens` (public, MIT license)
-- [ ] Add `.gitignore` (Python, ChromaDB, `.env`, model caches, `__pycache__`)
-- [ ] Add `README.md` stub with project name, one-line pitch, and "under construction" badge
-- [ ] Enable GitHub Issues and Projects board for milestone tracking
-- [ ] Add `CONTRIBUTING.md` with branch naming (`feature/`, `fix/`) and PR expectations
-- [ ] **Docs:** Record repo URL, license choice, and branch strategy in `docs/project-setup.md`
+- [X] Create GitHub repo `paperlens` (public, MIT license)
+- [X] Add `.gitignore` (Python, ChromaDB, `.env`, model caches, `__pycache__`)
+- [X] Add `README.md` stub with project name, one-line pitch, and "under construction" badge
+- [X] Enable GitHub Issues and Projects board for milestone tracking
+- [X] Add `CONTRIBUTING.md` with branch naming (`feature/`, `fix/`) and PR expectations
+- [X] **Docs:** Record repo URL, license choice, and branch strategy in `docs/project-setup.md`
 
 ### Milestone 0.2 — Local Development Environment
 
