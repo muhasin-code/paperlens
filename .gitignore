@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[code]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+env/
+
+
+# Secrets
+.env
+.env.local
+*.pem
+credentials.json
+
+
+# IDE
+.idea/
+.vscode
+
+
+# ML / data
+data/raw/
+data/processed/
+*.pt
+*.bin
+*.safetensors
+chroma/
+.cache/
+models/
+
+
+# OS
+.DS_Store
+Thumbs.db
+
+
+# Jupyter
+.ipynb_checkpoints/
+
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+
+# Docker
+docker-compose.override.yml
+
+
+# Misc.
+plan/*
+!plan/blueprint.md
