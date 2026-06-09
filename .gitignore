@@ -52,6 +52,8 @@ htmlcov/
 docker-compose.override.yml
 
 
-# Misc.
+# Planning
 plan/*
 !plan/blueprint.md
+!plan/paperlens_architecture.xml
+!plan/paperlens_flowchart.xml

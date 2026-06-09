@@ -5,7 +5,7 @@
 | **Field** | **Values** |
 |-----------|------------|
 | Repository Name | `paperlens` |
-| Web URL | `https://gitub.com/muhasin-code/paperlens` |
+| Web URL | `https://github.com/muhasin-code/paperlens` |
 | Visibility | Public |
 | Default Branch | `main` |
 
@@ -16,7 +16,7 @@
 
 ## SSH Remote
 
-git@github.com:muhasin-code/paperlense.git
+git@github-personal:muhasin-code/paperlens.git
 
 ## SSH Host Alias
 
@@ -69,7 +69,7 @@ The MIT License was selected because it is:
 
 See:
 
-[LICENSE](LICENSE.md)
+[LICENSE](../LICENSE)
 
 
 ---

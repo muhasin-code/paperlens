@@ -1,0 +1,245 @@
+<mxfile host="app.diagrams.net" modified="2026-06-07T00:00:00.000Z" agent="ChatGPT" version="24.7.17">
+  <diagram id="scholarmind-workflow" name="ScholarMind Workflow">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1"
+      connect="1" arrows="1" fold="1" page="1" pageScale="1"
+      pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Start -->
+        <mxCell id="start" value="Start"
+          style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;"
+          vertex="1" parent="1">
+          <mxGeometry x="520" y="20" width="120" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- User Query -->
+        <mxCell id="query" value="User submits query in Gradio UI"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;"
+          vertex="1" parent="1">
+          <mxGeometry x="420" y="120" width="320" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- FastAPI -->
+        <mxCell id="api" value="FastAPI receives request&#xa;and validates input"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;"
+          vertex="1" parent="1">
+          <mxGeometry x="420" y="240" width="320" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Decision -->
+        <mxCell id="decision1" value="Query Type?"
+          style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;"
+          vertex="1" parent="1">
+          <mxGeometry x="470" y="370" width="220" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Conversational -->
+        <mxCell id="conv" value="Conversational&#xa;Research Query"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;"
+          vertex="1" parent="1">
+          <mxGeometry x="120" y="520" width="240" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Structured -->
+        <mxCell id="structured" value="Structured&#xa;Extraction Query"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;"
+          vertex="1" parent="1">
+          <mxGeometry x="800" y="520" width="240" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Hybrid Retrieval -->
+        <mxCell id="retrieval" value="Run Hybrid Retrieval&#xa;• Semantic Search&#xa;• BM25 Search"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;"
+          vertex="1" parent="1">
+          <mxGeometry x="90" y="650" width="300" height="120" as="geometry"/>
+        </mxCell>
+
+        <!-- RRF -->
+        <mxCell id="rrf" value="Merge Results using&#xa;Reciprocal Rank Fusion"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;"
+          vertex="1" parent="1">
+          <mxGeometry x="110" y="820" width="260" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- Reranker -->
+        <mxCell id="reranker" value="Cross Encoder&#xa;Reranking"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;"
+          vertex="1" parent="1">
+          <mxGeometry x="130" y="960" width="220" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- Context -->
+        <mxCell id="context" value="Top Relevant Chunks&#xa;Selected"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;"
+          vertex="1" parent="1">
+          <mxGeometry x="130" y="1100" width="220" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- LLM -->
+        <mxCell id="llm" value="Ollama LLM Generates&#xa;Grounded Response"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;"
+          vertex="1" parent="1">
+          <mxGeometry x="120" y="1240" width="240" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Citation -->
+        <mxCell id="citation" value="Citation Enforcement&#xa;and Pydantic Validation"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;"
+          vertex="1" parent="1">
+          <mxGeometry x="110" y="1390" width="260" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Fine tuned -->
+        <mxCell id="finetune" value="Route to Fine-Tuned&#xa;QLoRA Extraction Model"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;"
+          vertex="1" parent="1">
+          <mxGeometry x="780" y="670" width="280" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Extract -->
+        <mxCell id="extract" value="Extract Structured Data&#xa;• Contributions&#xa;• Datasets&#xa;• Metrics&#xa;• Baselines"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;"
+          vertex="1" parent="1">
+          <mxGeometry x="760" y="840" width="320" height="140" as="geometry"/>
+        </mxCell>
+
+        <!-- JSON -->
+        <mxCell id="json" value="Generate Structured&#xa;JSON Output"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;"
+          vertex="1" parent="1">
+          <mxGeometry x="790" y="1040" width="260" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Stream -->
+        <mxCell id="stream" value="FastAPI Streams Response&#xa;via SSE"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;"
+          vertex="1" parent="1">
+          <mxGeometry x="430" y="1560" width="300" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Display -->
+        <mxCell id="display" value="Gradio Displays&#xa;Answer + Citations"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;"
+          vertex="1" parent="1">
+          <mxGeometry x="430" y="1710" width="300" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Observability -->
+        <mxCell id="obs" value="Log Metrics to Langfuse&#xa;• Retrieval Scores&#xa;• Tokens&#xa;• Latency&#xa;• Prompt Version"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;"
+          vertex="1" parent="1">
+          <mxGeometry x="1160" y="1240" width="320" height="160" as="geometry"/>
+        </mxCell>
+
+        <!-- End -->
+        <mxCell id="end" value="End"
+          style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;"
+          vertex="1" parent="1">
+          <mxGeometry x="520" y="1870" width="120" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Connections -->
+
+        <mxCell id="e1" edge="1" parent="1" source="start" target="query"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e2" edge="1" parent="1" source="query" target="api"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e3" edge="1" parent="1" source="api" target="decision1"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e4" value="Conversational"
+          edge="1" parent="1" source="decision1" target="conv"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e5" value="Structured"
+          edge="1" parent="1" source="decision1" target="structured"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e6" edge="1" parent="1" source="conv" target="retrieval"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e7" edge="1" parent="1" source="retrieval" target="rrf"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e8" edge="1" parent="1" source="rrf" target="reranker"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e9" edge="1" parent="1" source="reranker" target="context"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e10" edge="1" parent="1" source="context" target="llm"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e11" edge="1" parent="1" source="llm" target="citation"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e12" edge="1" parent="1" source="structured" target="finetune"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e13" edge="1" parent="1" source="finetune" target="extract"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e14" edge="1" parent="1" source="extract" target="json"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e15" edge="1" parent="1" source="citation" target="stream"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e16" edge="1" parent="1" source="json" target="stream"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e17" edge="1" parent="1" source="stream" target="display"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e18" edge="1" parent="1" source="display" target="end"
+          style="endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e19" edge="1" parent="1" source="api" target="obs"
+          style="dashed=1;endArrow=block;html=1;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
