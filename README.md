@@ -16,7 +16,7 @@ _Coming in Phase 2-4._
 
 ## Quick Start
 
-_Coming in Phase 1._
+_Coming in Phase 1._ For environment setup, see [docs/dev-environment.md](docs/dev-environment.md)
 
 ## Live Demo
 
