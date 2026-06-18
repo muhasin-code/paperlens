@@ -73,12 +73,12 @@ Every milestone ends with a **Docs** step. Treat documentation as a deliverable,
 
 ### Milestone 0.2 — Local Development Environment
 
-- [ ] Install Python 3.11+, create virtual environment
-- [ ] Install Ollama; pull `llama3.2:3b` (or `phi4-mini`) and verify inference
-- [ ] Install Docker and Docker Compose
-- [ ] Verify GPU/CPU constraints on target machine (Dell Latitude 7490)
-- [ ] Create `.env.example` with all config placeholders (no secrets)
-- [ ] **Docs:** Write `docs/dev-environment.md` — prerequisites, install commands, verification checklist
+- [X] Install Python 3.11+, create virtual environment
+- [X] Install Ollama; pull `llama3.2:3b` (or `phi4-mini`) and verify inference
+- [X] Install Docker and Docker Compose
+- [X] Verify GPU/CPU constraints on target machine (Dell Latitude 7490)
+- [X] Create `.env.example` with all config placeholders (no secrets)
+- [X] **Docs:** Write `docs/dev-environment.md` — prerequisites, install commands, verification checklist
 
 ### Milestone 0.3 — Project Scaffolding
 
