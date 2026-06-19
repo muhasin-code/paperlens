@@ -371,7 +371,7 @@ instead of larger models.
 
 Verify
 
-```bash 
+```bash
 python3.11 --version
 ```
 

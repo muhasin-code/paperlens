@@ -1,0 +1,25 @@
+# See https://pre-commit.com for documentation
+# ruff handles linting, formatting, and import sorting - no separate black or isort
+
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9     # pin to a specific version; update periodically
+    hooks:
+      - id: ruff
+        args: ["--fix", "--exit-non-zero-on-fix"]
+        name: ruff (line + auto-fix)
+      - id: ruff-format
+        name: ruff-format (formatter)
+
+  # Optional but useful: catch common issues before they reach CI
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ["--maxkb=500"]     # prevent accidental model/data file commits
+      - id: check-merge-conflict
+      - id: debug-statements

@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+      - "fix/**"
+      - "chore/**"
+    pull_request:
+      branches:
+        - main
+
+jobs:
+  lint-and-test:
+    name: Lint & Test (Python 3.11)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install CPU torch
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install runtime dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install dev tools
+        run: |
+          pip install -r requirements-dev.txt
+
+      - name: Run ruff lint
+        run: |
+          ruff check src/ tests/
+
+      - name: Run ruff format check
+        run: |
+          ruff format --check src/ tests/
+
+      - name: Run tests
+        run: |
+          pytest tests/ -v

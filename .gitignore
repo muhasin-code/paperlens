@@ -25,10 +25,10 @@ credentials.json
 # ML / data
 data/raw/
 data/processed/
+data/chroma/
 *.pt
 *.bin
 *.safetensors
-chroma/
 .cache/
 models/
 
@@ -57,6 +57,11 @@ plan/*
 !plan/blueprint.md
 !plan/paperlens_architecture.xml
 !plan/paperlens_flowchart.xml
+
+
+# Git directory placeholders - never commit .gitkeep files in editor ouputs
+!**/.gitkeep
+
 
 # Misc.
 docs/hardware_baseline.txt

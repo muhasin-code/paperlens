@@ -116,7 +116,7 @@ PaperLens uses:
 Rationale:
 
 * cleaner commit history
-* easier milestone tracking 
+* easier milestone tracking
 * simpler rollback management
 
 Additionl workflow details documented in: [CONTRIBUTING](CONTRIBUTING.md)
