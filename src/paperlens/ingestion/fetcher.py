@@ -10,7 +10,7 @@ Design decisions:
 
 import logging
 import time
-from datetime import UTC
+from datetime import UTC, datetime
 from pathlib import Path
 
 import arxiv
@@ -66,11 +66,7 @@ class ArxivFetcher:
     # ── Query ─────────────────────────────────────────────────────────────
     def _build_query(self) -> str:
         """Build the arXiv search query with category and date range filters."""
-        date_from = self.settings.arxiv_date_from.replace("-", "")
-        date_to = self.settings.arxiv_date_to.replace("-", "")
-        return (
-            f"cat: {self.settings.arxiv_category}" f"AND submittedDate: [{date_from} TO {date_to}]"
-        )
+        return f"cat: {self.settings.arxiv_category}"
 
     # ── Metadata storage ──────────────────────────────────────────────────
     def load_existing_ids(self) -> set[str]:
@@ -122,6 +118,9 @@ class ArxivFetcher:
             sort_order=arxiv.SortOrder.Descending,
         )
 
+        date_from = datetime.strptime(self.settings.arxiv_date_from, "%Y-%m-%d").replace(tzinfo=UTC)
+        date_to = datetime.strptime(self.settings.arxiv_date_to, "%Y-%m-%d").replace(tzinfo=UTC)
+
         papers: list[Paper] = []
         skipped = 0
 
@@ -131,6 +130,9 @@ class ArxivFetcher:
             desc="Fetching metadata",
             unit="paper",
         ):
+            if not (date_from <= result.published <= date_to):
+                continue
+
             arxiv_id = result.get_short_id()
 
             if arxiv_id in skip_ids:
