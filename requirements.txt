@@ -42,6 +42,10 @@ langfuse>=2.25.0
 ragas>=0.2.0
 
 
+# ── CLI Utilities ────────────────────────────────────────────────
+tqdm>=4.66.0
+
+
 # ── Fine-tuning deps (Phase 3 ─ heavy; skip if RAM < 12 GB during dev)
 # transformers>=4.44.0
 # peft>=0.12.0

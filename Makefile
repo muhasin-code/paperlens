@@ -34,6 +34,17 @@ test:
 	pytest tests/ -r
 
 
+# ─── Ingestion ────────────────────────────────────────────────────────
+
+ingest:
+	@echo "-> Running full arXiv ingestion (~1-2 hours for 500 papers) ..."
+	python scripts/ingest.py
+
+ingest-dry:
+	@echo "-> Dry run: fetching metadata only, no downloads ..."
+	python scripts/ingest.py --dry-run
+
+
 # ─── Development Server ───────────────────────────────────────────────────────────
 
 run:
@@ -63,3 +74,5 @@ help:
 	@echo " make test			Run pytest suite"
 	@echo " make run			Start FastAPI dev server"
 	@echo " make clean			Remove __pycache__, .pyc, pytest and coverage artifacts"
+	@echo " make ingest			Run full arXiv ingestion pipeline"
+	@echo " make ingest-dry		Preview what would be ingested (no downloads)"
