@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import arxiv
+import httpx
 from tqdm import tqdm
 
 from src.paperlens.ingestion.models import Paper
@@ -190,11 +191,9 @@ class ArxivFetcher:
                 continue
 
             try:
-                result = next(self.client.results(arxiv.Search(id_list=[paper.arxiv_id])))
-                result.download_pdf(
-                    dirpath=str(pdf_dir),
-                    filename=f"{paper.arxiv_id}.pdf",
-                )
+                response = httpx.get(paper.pdf_url, follow_redirects=True, timeout=30)
+                response.raise_for_status()
+                dest.write_bytes(response.content)
                 updated.append(paper.model_copy(update={"pdf_path": str(dest.resolve())}))
                 self.logger.debug("Downloaded: %s", dest.name)
             except Exception as exc:
