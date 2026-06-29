@@ -82,12 +82,12 @@ Every milestone ends with a **Docs** step. Treat documentation as a deliverable,
 
 ### Milestone 0.3 — Project Scaffolding
 
-- [ ] Define directory layout: `src/`, `configs/`, `data/`, `scripts/`, `tests/`, `docs/`, `eval/`
-- [ ] Add `pyproject.toml` or `requirements.txt` with pinned core deps
-- [ ] Add `Makefile` or `scripts/run.sh` for common commands
-- [ ] Set up pre-commit hooks (ruff/black/isort or equivalent)
-- [ ] Add initial CI workflow: lint + unit test skeleton on push
-- [ ] **Docs:** Write `docs/architecture-overview.md` linking to existing XML diagrams in `plan/`
+- [X] Define directory layout: `src/`, `configs/`, `data/`, `scripts/`, `tests/`, `docs/`, `eval/`
+- [X] Add `pyproject.toml` or `requirements.txt` with pinned core deps
+- [X] Add `Makefile` or `scripts/run.sh` for common commands
+- [X] Set up pre-commit hooks (ruff/black/isort or equivalent)
+- [X] Add initial CI workflow: lint + unit test skeleton on push
+- [X] **Docs:** Write `docs/architecture-overview.md` linking to existing XML diagrams in `plan/`
 
 ---
 
@@ -99,11 +99,11 @@ Every milestone ends with a **Docs** step. Treat documentation as a deliverable,
 
 ### Milestone 1.1 — arXiv Data Ingestion
 
-- [ ] Choose ML subfield domain (transformers / diffusion / RL — pick one)
-- [ ] Implement arXiv fetch script using arXiv Python API (200–500 papers)
-- [ ] Download PDFs; store metadata (title, authors, arXiv ID, date, abstract)
-- [ ] Add idempotent re-run logic and ingestion logging
-- [ ] **Docs:** Document domain choice rationale and dataset stats in `docs/data-ingestion.md`
+- [X] Choose ML subfield domain (transformers / diffusion / RL — pick one)
+- [X] Implement arXiv fetch script using arXiv Python API (200–500 papers)
+- [X] Download PDFs; store metadata (title, authors, arXiv ID, date, abstract)
+- [X] Add idempotent re-run logic and ingestion logging
+- [X] **Docs:** Document domain choice rationale and dataset stats in `docs/data-ingestion.md`
 
 ### Milestone 1.2 — Document Parsing & Section-Aware Chunking
 
