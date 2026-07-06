@@ -11,6 +11,8 @@ import logging
 import re
 from pathlib import Path
 
+import fitz
+
 from src.paperlens.ingestion.models import Paper
 from src.paperlens.parsing.models import Section
 
@@ -48,7 +50,7 @@ class PdfParser:
     def __init__(self) -> None:
         self.logger = logger
 
-    def extract_text_by_page(self, pages: list[str]) -> list[Section]:
+    def detect_sections(self, pages: list[str]) -> list[Section]:
         """
         Detects section boundaries from extracted page texts.
 
@@ -102,12 +104,20 @@ class PdfParser:
         filtered = [s for s in sections if s.label not in ("references", "appendix")]
 
         self.logger.debug(
-            "Detected %d sections (%d after filetering) across %d pages",
+            "Detected %d sections (%d after filtering) across %d pages",
             len(sections),
             len(filtered),
             len(pages),
         )
         return filtered
+
+    def extract_text_by_page(self, pdf_path: Path) -> list[str]:
+        """Extract raw text from a PDF, returning one string per page."""
+        pages: list[str] = []
+        with fitz.open(pdf_path) as doc:
+            for page in doc:
+                pages.append(page.get_text("text"))
+        return pages
 
     def _match_heading(self, text: str) -> str | None:
         """Return the section label if the text starts with a known heading, else None."""
