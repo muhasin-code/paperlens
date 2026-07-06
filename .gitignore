@@ -57,6 +57,8 @@ plan/*
 !plan/blueprint.md
 !plan/paperlens_architecture.xml
 !plan/paperlens_flowchart.xml
+!plan/completed_milestones.md
+!plan/completed-milestones/
 
 
 # Git directory placeholders - never commit .gitkeep files in editor ouputs
