@@ -17,6 +17,10 @@ pandas>=2.2.0
 pyarrow>=17.0.0                 # Parquet serialization for processed chunks
 
 
+# ── Document Parsing (Phase 1) ──────────────────────────────────
+tiktoken>=0.7.0                 # accurate token counting for chunk sizing
+
+
 # ── Retrieval & Embeddings ───────────────────────────────────────
 # torch CPU-only ─ see install note below; do NOT install from this file directly
 # install with: pip install torch --index-url https://download.pytorch.org/whl/cpu

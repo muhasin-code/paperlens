@@ -45,6 +45,17 @@ ingest-dry:
 	python scripts/ingest.py --dry-run
 
 
+# ─── Parsing ──────────────────────────────────────────────────────
+
+parse:
+	@echo "-> Parsing PDFs into section-aware chunks (~30-60 min for 500 papers)..."
+	python scripts/parse.py
+
+parse-dry:
+	@echo "-> Dry run: parsing first 5 papers, no writes..."
+	python scripts/parse.py --dry-run --limit 5
+
+
 # ─── Development Server ───────────────────────────────────────────────────────────
 
 run:
@@ -76,3 +87,5 @@ help:
 	@echo " make clean			Remove __pycache__, .pyc, pytest and coverage artifacts"
 	@echo " make ingest			Run full arXiv ingestion pipeline"
 	@echo " make ingest-dry		Preview what would be ingested (no downloads)"
+	@echo " make parse			Run full PDF parsing pipeline"
+	@echo " make parse-dry		Preview parsing on 5 papers (no writes)"
