@@ -23,6 +23,7 @@ Directory: `plan/completed-milestones/phase-1-core-rag-pipeline/`
 | # | Milestone | Completed | Git ref | Summary | Key Deliverables | Detail |
 |---|---|---|---|---|---|---|
 | 1.1 | [arXiv Data Ingestion](completed-milestones/phase-1-core-rag-pipeline/1.1-arxiv-data-ingestion.md) | 2026-06-25 | — | Idempotent ingestion of 500 cs.LG papers into metadata.jsonl + PDF corpus. | [x] ArxivFetcher [x] JSONL persistence [x] 500 papers | [Link](completed-milestones/phase-1-core-rag-pipeline/1.1-arxiv-data-ingestion.md) |
+| 1.2 | Document Parsing & Section-Aware Chunking | 2026-07-06 | — | Transform PDFs into section-aware chunks with full provenance. Generated 17,330 chunks across 499 papers; supports LaTeX/math retention. | [x] PDF parsing [x] Section-aware chunking [x] Idempotent pipeline [x] Comprehensive tests | [Link](completed-milestones/phase-1-core-rag-pipeline/1.2-document-parsing-chunking.md) |
 
 ---
 
