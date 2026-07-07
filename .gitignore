@@ -53,11 +53,7 @@ docker-compose.override.yml
 
 
 # Planning
-plan/*
-!plan/blueprint.md
-!plan/paperlens_architecture.xml
-!plan/paperlens_flowchart.xml
-plan/completed_milestones.md
+plan/
 
 # Git directory placeholders - never commit .gitkeep files in editor ouputs
 !**/.gitkeep
