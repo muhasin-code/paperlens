@@ -56,6 +56,17 @@ parse-dry:
 	python scripts/parse.py --dry-run --limit 5
 
 
+# ─── Embedding ───────────────────────────────────────────────────────────
+
+embed:
+	@echo "-> Embedding chunks into ChromaDB (~10-20 minutes for 17k chunks)..."
+	python scripts/embed.py
+
+embed-dry:
+	@echo "-> Dry run: embedding first 5 chunks, no writes..."
+	python scripts/embed.py --dry-run --limit 5
+
+
 # ─── Development Server ───────────────────────────────────────────────────────────
 
 run:
@@ -89,3 +100,5 @@ help:
 	@echo " make ingest-dry		Preview what would be ingested (no downloads)"
 	@echo " make parse			Run full PDF parsing pipeline"
 	@echo " make parse-dry		Preview parsing on 5 papers (no writes)"
+	@echo " make embed			Run full embedding pipeline into ChromaDB"
+	@echo " make embed-dry 		Preview embedding on 5 chunks (no writes)"
