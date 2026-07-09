@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     chroma_persist_dir: Path = Field(default=Path("./data/chroma"))
     bm25_index_path: Path = Field(default=Path("./data/bm25_index.pkl"))
     processed_chunks_path: Path = Field(default=Path("./data/processed/chunks.parquet"))
+    embedding_checkpoint_path: Path = Field(
+        default=Path("./data/processed/embedding_checkpoint.jsonl")
+    )
     embedding_model: str = "BAAI/bge-large-en-v1.5"
     reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-12-v2"
     retrieval_top_k: int = 20
