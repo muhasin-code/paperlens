@@ -9,7 +9,6 @@ Design decisions:
 """
 
 import logging
-import os
 
 from sentence_transformers import SentenceTransformer
 
@@ -32,7 +31,7 @@ class EmbeddingModel:
     def __init__(self, settings: Settings, batch_size: int = DEFAULT_BATCH_SIZE) -> None:
         self.model_name = settings.embedding_model
         self.batch_size = batch_size
-        self.device = os.environ.get("EMBEDDING_DEVICE", "cpu")  # CPU-only box; override via settings if GPU availale
+        self.device = "cpu"  # CPU-only box; override via settings if GPU availale
         self._model = SentenceTransformer(self.model_name, device=self.device)
         self.dimension = self._model.get_embedding_dimension()
         self.logger = logger
