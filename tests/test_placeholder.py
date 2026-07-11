@@ -1,11 +1,12 @@
-"""
-Placeholder test - replaced by real tests in Phase 01.
+"""Placeholder test — replaced by real tests in Phase 1.
 
 Verifies that the test suite runs and the PaperLens package is importable.
 """
 
+from fastapi.testclient import TestClient
 
-def test_paperlense_package_importable() -> None:
+
+def test_paperlens_package_importable() -> None:
     """Smoke test: src/paperlens/__init__.py is importable and has a version."""
     from src.paperlens import __version__
 
@@ -14,12 +15,16 @@ def test_paperlense_package_importable() -> None:
 
 
 def test_health_endpoint_schema() -> None:
-    """Smoke test: FastAPI app instance is created and /health route exists."""
-    from fastapi.testclient import TestClient
-
+    """Smoke test: FastAPI app instance is created and /health route exists with new schema."""
     from src.paperlens.main import app
 
     client = TestClient(app)
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    data = response.json()
+    assert data["status"] in ("ok", "degraded")
+    assert "chroma_collection" in data
+    assert "chroma_vector_count" in data
+    assert "ollama_reachable" in data
+    assert "ollama_model" in data
+    assert "ollama_fallback_model" in data

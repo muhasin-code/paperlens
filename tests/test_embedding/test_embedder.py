@@ -37,10 +37,9 @@ def _make_chunk(text: str, cid: str = "2401.00001v1_chunk_0001") -> Chunk:
 def fake_model() -> MagicMock:
     """A mocked SentenceTransformer returning fixed unit vectors."""
     m = MagicMock()
-    m.get_embedding_dimension.return_value = 4
+    m.get_sentence_embedding_dimension.return_value = 4  # This matches embedder.py line 36
 
     def _encode(texts, **kwargs):
-        # Return distinct unit vectors per input.
         out = []
         for i, _ in enumerate(texts):
             vec = np.zeros(4, dtype=np.float32)
