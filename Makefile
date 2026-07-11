@@ -31,7 +31,7 @@ format:
 
 test:
 	@echo "-> Running pytest..."
-	pytest tests/ -r
+	pytest tests/ -v
 
 
 # ─── Ingestion ────────────────────────────────────────────────────────

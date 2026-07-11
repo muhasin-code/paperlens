@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import ollama
 
 from src.paperlens.api.schemas import Citation, QueryResponse
+from src.paperlens.embedding.embedder import EmbeddingModel  # ADD THIS
 from src.paperlens.embedding.retriever import RetrievalResult, SemanticRetriever
 from src.paperlens.settings import Settings
 
@@ -39,15 +40,35 @@ class GenerationResult:
     latency_ms: float
 
 
+# Module-level singleton for EmbeddingModel (loaded once per process)
+_embedding_model_cache: EmbeddingModel | None = None
+
+
+def _get_embedding_model(settings: Settings) -> EmbeddingModel:
+    """Return a cached EmbeddingModel instance."""
+    global _embedding_model_cache
+    if _embedding_model_cache is None:
+        from src.paperlens.embedding.embedder import EmbeddingModel
+
+        _embedding_model_cache = EmbeddingModel(settings)
+    return _embedding_model_cache
+
+
 class RAGService:
     """Orchestrates the end-to-end RAG query pipeline."""
 
     def __init__(self, settings: Settings, retriever: SemanticRetriever | None = None) -> None:
         self.settings = settings
-        self.retriever = retriever or SemanticRetriever(settings)
+        # Use cached embedding model via singleton retriever
+        self.retriever = retriever or SemanticRetriever(
+            settings, embedder=_get_embedding_model(settings)
+        )
         self._ollama_client = ollama.AsyncClient(host=settings.ollama_base_url)
         self.primary_model = settings.ollama_model
         self.fallback_model = FALLBACK_MODEL
+        # Health check cache (TTL 10 seconds)
+        self._health_cache: tuple[float, dict] | None = None
+        self._health_ttl = 10.0
 
     async def query(self, request) -> QueryResponse:
         """Execute the full RAG pipeline for a single query."""
@@ -114,17 +135,17 @@ class RAGService:
         for attempt, m in enumerate((model, self.fallback_model)):
             try:
                 logger.info("Generating with model=%s (attempt %d)", m, attempt + 1)
+                start = time.perf_counter()
                 resp = await self._ollama_client.generate(
                     model=m,
                     prompt=prompt,
-                    options={"temperature": 0.1, "num_predict": 512},
+                    options={"temperature": 0.1, "num_predict": 256},  # reduced from 512
                 )
+                latency_ms = (time.perf_counter() - start) * 1000
                 text = resp.get("response", "")
                 if not text.strip():
                     raise ValueError("Empty response from Ollama")
-                return GenerationResult(
-                    text=text, model_used=m, latency_ms=0.0
-                )  # latency set by caller
+                return GenerationResult(text=text, model_used=m, latency_ms=latency_ms)
             except Exception as exc:  # noqa: BLE001
                 logger.warning("Ollama generation failed with %s: %s", m, exc)
                 if attempt == 0:
@@ -133,7 +154,6 @@ class RAGService:
                     f"Both primary ({self.primary_model}) and fallback ({self.fallback_model}) models failed"
                 ) from exc
 
-        # Unreachable (loop always returns or raises)
         raise RuntimeError("Generation loop exited unexpectedly")
 
     def _build_citations(self, results: list[RetrievalResult]) -> list[Citation]:
@@ -165,7 +185,11 @@ class RAGService:
         return max(0.0, min(1.0, mean_score))
 
     async def health_check(self) -> dict:
-        """Check ChromaDB collection count and Ollama reachability."""
+        """Check ChromaDB collection count and Ollama reachability (cached 10s)."""
+        now = time.perf_counter()
+        if self._health_cache and (now - self._health_cache[0]) < self._health_ttl:
+            return self._health_cache[1]
+
         from src.paperlens.embedding.vector_store import VectorStore
 
         store = VectorStore(self.settings)
@@ -178,7 +202,9 @@ class RAGService:
         except Exception as exc:  # noqa: BLE001
             logger.warning("Ollama health check failed: %s", exc)
 
-        return {
+        result = {
             "chroma_vector_count": chroma_count,
             "ollama_reachable": ollama_ok,
         }
+        self._health_cache = (now, result)
+        return result

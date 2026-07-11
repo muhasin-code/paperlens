@@ -14,13 +14,21 @@ from src.paperlens.settings import get_settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan: startup/shutdown logging."""
+    """Application lifespan: startup/shutdown logging + warm embedding model."""
     settings = get_settings()
     import logging
 
     logging.basicConfig(level=settings.log_level.upper())
     logger = logging.getLogger("paperlens")
     logger.info("PaperLens API starting on %s:%d", settings.api_host, settings.api_port)
+
+    # Warm the embedding model (loads BGE model into memory)
+    logger.info("Warming embedding model...")
+    from src.paperlens.embedding.embedder import EmbeddingModel
+
+    _ = EmbeddingModel(settings)
+    logger.info("Embedding model warmed.")
+
     yield
     logger.info("PaperLens API shutting down")
 

@@ -24,12 +24,14 @@ async def main() -> None:
     parser.add_argument("query", type=str, help="Natural language question.")
     parser.add_argument("--top-k", type=int, default=None, help="Override retrieval top-k.")
     parser.add_argument("--model", type=str, default=None, help="Override Ollama model.")
-    parser.add_argument("--host", type=str, default=None, help="API host (default from settings).")
+    parser.add_argument(
+        "--host", type=str, default="localhost", help="API host (default: localhost)."
+    )
     parser.add_argument("--port", type=int, default=None, help="API port (default from settings).")
     args = parser.parse_args()
 
     settings = get_settings()
-    host = args.host or settings.api_host
+    host = args.host
     port = args.port or settings.api_port
     url = f"http://{host}:{port}/query"
 
@@ -47,7 +49,7 @@ async def main() -> None:
         print(f"  model: {args.model}")
     print()
 
-    async with httpx.AsyncClient(timeout=120.0) as client:
+    async with httpx.AsyncClient(timeout=300.0) as client:
         try:
             resp = await client.post(url, json=payload)
             resp.raise_for_status()

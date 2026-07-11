@@ -20,9 +20,14 @@ from src.paperlens.settings import Settings
 class SemanticRetriever:
     """Top-k semantic search over the ChromaDB chunk index."""
 
-    def __init__(self, settings: Settings, top_k: int | None = None) -> None:
+    def __init__(
+        self,
+        settings: Settings,
+        top_k: int | None = None,
+        embedder: EmbeddingModel | None = None,
+    ) -> None:
         self.settings = settings
-        self.embedder = EmbeddingModel(settings)
+        self.embedder = embedder or EmbeddingModel(settings)
         self.store = VectorStore(settings)
         self.top_k = top_k or settings.retrieval_top_k
         self.logger = logging.getLogger("paperlens.embedding")

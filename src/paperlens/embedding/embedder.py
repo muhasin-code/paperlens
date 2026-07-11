@@ -2,9 +2,9 @@
 Embedding model wrapper around sentence-transformers.
 
 Design decisions:
-- BAAI/bge-large-en-v1.5: 1024-dim, strong general purpose English retriever.
+- BAAI/bge-large-en-v1.5: 1024-dim, strong general-purpose English retriever.
 - Query prefix applied ONLY to queries (BGE training convention).
-- Embedding normalized to unit length so dot-product == cosine similarity.
+- Embeddings normalized to unit length so dot-product == cosine similarity.
 - CPU-only by default; batch encoding with tqdm progress.
 """
 
@@ -19,7 +19,7 @@ from src.paperlens.settings import Settings
 logger = logging.getLogger("paperlens.embedding")
 
 # BGE training convention: prefix queries with this string.
-BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages:"
+BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 
 # Default batch size for corpus encoding (memory-safe on CPU).
 DEFAULT_BATCH_SIZE = 16
@@ -31,9 +31,9 @@ class EmbeddingModel:
     def __init__(self, settings: Settings, batch_size: int = DEFAULT_BATCH_SIZE) -> None:
         self.model_name = settings.embedding_model
         self.batch_size = batch_size
-        self.device = "cpu"  # CPU-only box; override via settings if GPU availale
+        self.device = "cpu"  # CPU-only box; override via settings if GPU available
         self._model = SentenceTransformer(self.model_name, device=self.device)
-        self.dimension = self._model.get_embedding_dimension()
+        self.dimension = self._model.get_sentence_embedding_dimension()
         self.logger = logger
         self.logger.info(
             "Loaded embedding model %s (dim=%d, device=%s)",
@@ -46,7 +46,6 @@ class EmbeddingModel:
         """Embed a list of corpus chunks (no query prefix, normalized)."""
         if not chunks:
             return []
-
         texts = [c.text for c in chunks]
         vectors = self._model.encode(
             texts,
