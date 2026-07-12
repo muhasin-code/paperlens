@@ -34,6 +34,10 @@ rank-bm25>=0.2.2
 ollama>=0.4.0                   # Ollama Python client
 
 
+# ── Benchmarking ──────────────────────────────────────────────────────────────
+psutil>=6.0.0
+
+
 # ── Prompts & Config Files ───────────────────────────────────────
 pyyaml>=6.0.2                   # versioned prompt YAML in configs/prompts/
 
