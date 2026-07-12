@@ -73,6 +73,18 @@ run:
 	@echo "-> Starting FastAPI dev server on http://localhost:8000 ..."
 	uvicorn src.paperlens.main:app --reload --host 0.0.0.0 --port 8000
 
+ui:
+	@echo "-> Starting Gradio UI on http://localhost:7860 ..."
+	python -m src.paperlens.ui.app
+
+
+# ─── Benchmarking ─────────────────────────────────────────────────────────────────
+
+benchmark:
+	@echo "-> Running Ollama inference benchmarks (phi4-mini + llama3.2:1b)..."
+	@echo "   Ensure 'ollama serve' is running and models are pulled."
+	python scripts/benchmark_ollama.py
+
 
 # ─── Cleanup ──────────────────────────────────────────────────────────────────────
 
@@ -95,6 +107,8 @@ help:
 	@echo " make format			Ruff format + auto-fix (modifies files)"
 	@echo " make test			Run pytest suite"
 	@echo " make run			Start FastAPI dev server"
+	@echo " make ui             Start Gradio UI (port 7860) — requires API server running"
+	@echo " make benchmark      Run Ollama inference benchmarks (tokens/sec, TTFT, RAM)"
 	@echo " make clean			Remove __pycache__, .pyc, pytest and coverage artifacts"
 	@echo " make ingest			Run full arXiv ingestion pipeline"
 	@echo " make ingest-dry		Preview what would be ingested (no downloads)"
