@@ -1,13 +1,15 @@
 """RAG service: retrieval → context assembly → Ollama generation → cited answer."""
 
+import json
 import logging
 import time
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 
 import ollama
 
-from src.paperlens.api.schemas import Citation, QueryResponse
-from src.paperlens.embedding.embedder import EmbeddingModel  # ADD THIS
+from src.paperlens.api.schemas import Citation, QueryRequest, QueryResponse
+from src.paperlens.embedding.embedder import EmbeddingModel
 from src.paperlens.embedding.retriever import RetrievalResult, SemanticRetriever
 from src.paperlens.settings import Settings
 
@@ -70,7 +72,7 @@ class RAGService:
         self._health_cache: tuple[float, dict] | None = None
         self._health_ttl = 10.0
 
-    async def query(self, request) -> QueryResponse:
+    async def query(self, request: QueryRequest) -> QueryResponse:
         """Execute the full RAG pipeline for a single query."""
         total_start = time.perf_counter()
 
@@ -116,6 +118,64 @@ class RAGService:
             total_time_ms=total_time_ms,
         )
 
+    async def query_stream(self, request: QueryRequest) -> AsyncGenerator[str, None]:
+        """Execute the full RAG pipeline with SSE streaming."""
+        total_start = time.perf_counter()
+
+        # 1) Retrieval
+        retrieval_start = time.perf_counter()
+        results: list[RetrievalResult] = self.retriever.search(
+            query=request.query, top_k=request.top_k
+        )
+        retrieval_time_ms = (time.perf_counter() - retrieval_start) * 1000
+
+        if not results:
+            yield f"data: {json.dumps({'answer': 'I cannot answer from the provided sources.', 'citations': [], 'confidence': 0.0, 'retrieval_time_ms': retrieval_time_ms, 'generation_time_ms': 0, 'total_time_ms': (time.perf_counter() - total_start) * 1000, 'done': True})}\n\n"
+            return
+
+        # 2) Context assembly
+        context = self._assemble_context(results)
+
+        # 3) Build citations
+        citations = self._build_citations(results)
+
+        # Send initial metadata
+        yield f"data: {json.dumps({'citations': [c.model_dump() for c in citations], 'retrieval_time_ms': retrieval_time_ms})}\n\n"
+
+        # 4) LLM generation (with fallback) - stream tokens
+        generation_start = time.perf_counter()
+        prompt = RAG_PROMPT_TEMPLATE.format(context=context, query=request.query)
+        model = request.model or self.primary_model
+
+        for attempt, m in enumerate((model, self.fallback_model)):
+            try:
+                logger.info("Generating with model=%s (attempt %d)", m, attempt + 1)
+                stream = await self._ollama_client.generate(
+                    model=m,
+                    prompt=prompt,
+                    options={"temperature": 0.1, "num_predict": 256},
+                    stream=True,
+                )
+                async for chunk in stream:
+                    token = chunk.get("response", "")
+                    if token:
+                        yield f"data: {json.dumps({'token': token})}\n\n"
+                # Generation complete
+                generation_time_ms = (time.perf_counter() - generation_start) * 1000
+                total_time_ms = (time.perf_counter() - total_start) * 1000
+                confidence = self._compute_confidence(results)
+                yield f"data: {json.dumps({'generation_time_ms': generation_time_ms, 'total_time_ms': total_time_ms, 'confidence': confidence, 'model': m, 'done': True})}\n\n"
+                return
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Ollama generation failed with %s: %s", m, exc)
+                if attempt == 0:
+                    continue  # try fallback
+                raise RuntimeError(
+                    f"Both primary ({self.primary_model}) and fallback ({self.fallback_model}) models failed"
+                ) from exc
+
+        raise RuntimeError("Generation loop exited unexpectedly")
+
     def _assemble_context(self, results: list[RetrievalResult]) -> str:
         """Concatenate chunk texts with [chunk_id] markers."""
         parts = []
@@ -139,7 +199,7 @@ class RAGService:
                 resp = await self._ollama_client.generate(
                     model=m,
                     prompt=prompt,
-                    options={"temperature": 0.1, "num_predict": 256},  # reduced from 512
+                    options={"temperature": 0.1, "num_predict": 256},
                 )
                 latency_ms = (time.perf_counter() - start) * 1000
                 text = resp.get("response", "")
