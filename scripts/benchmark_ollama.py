@@ -23,6 +23,8 @@ import psutil
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.paperlens.settings import get_settings
 
+settings = get_settings()
+
 
 @dataclass
 class BenchmarkResult:
@@ -48,7 +50,6 @@ PROMPTS = [
 
 async def benchmark_model(model: str, runs: int, prompt: str) -> list[BenchmarkResult]:
     """Run benchmark for a single model/prompt combination."""
-    settings = get_settings()
     client = ollama.AsyncClient(host=settings.ollama_base_url)
 
     results: list[BenchmarkResult] = []
@@ -118,7 +119,7 @@ async def main() -> None:
     )
     args = parser.parse_args()
 
-    models = args.model or ["phi4-mini", "llama3.2:1b"]
+    models = args.model or [settings.ollama_model]
     all_results: list[BenchmarkResult] = []
 
     print(f"Benchmarking models: {models}")
