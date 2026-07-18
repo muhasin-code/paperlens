@@ -4,12 +4,18 @@ Routes and dependencies are added in Phase 1 (Milestone 1.4).
 """
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from src.paperlens.api.routes import router as api_router
 from src.paperlens.settings import get_settings
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
 
 
 @asynccontextmanager
@@ -40,20 +46,35 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS for local Gradio dev (Phase 1.5)
+# CORS — allow all origins in development so Vite dev server on any host/port works.
+# In production behind a reverse proxy, restrict this to your domain.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:7860", "http://127.0.0.1:7860"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include API routes (/query, /health)
+# Serve React static assets
+if FRONTEND_DIST.exists():
+    assets_dir = FRONTEND_DIST / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="frontend-assets")
+
+# Include API routes (/query, /health, /query/stream)
 app.include_router(api_router)
 
 
-@app.get("/")
-async def root() -> dict[str, str]:
-    """Root endpoint — basic service info."""
-    return {"name": "PaperLens", "version": "0.0.1", "docs": "/docs"}
+# SPA catch-all: serve index.html for all non-API, non-static paths
+@app.get("/{full_path:path}")
+async def serve_react(request: Request, full_path: str) -> FileResponse:
+    """Serve React app for all non-API routes (SPA fallback)."""
+    if not FRONTEND_DIST.exists():
+        return FileResponse(FRONTEND_DIST / "index.html")
+
+    file_path = FRONTEND_DIST / full_path
+    if full_path and file_path.exists() and file_path.is_file():
+        return FileResponse(file_path)
+
+    return FileResponse(FRONTEND_DIST / "index.html")

@@ -1,6 +1,6 @@
 # Python
 __pycache__/
-*.py[code]
+*.py[cod]
 *.egg-info/
 .eggs/
 dist/
@@ -9,18 +9,15 @@ build/
 venv/
 env/
 
-
 # Secrets
 .env
 .env.local
 *.pem
 credentials.json
 
-
 # IDE
 .idea/
-.vscode
-
+.vscode/
 
 # ML / data
 data/raw/
@@ -32,32 +29,33 @@ data/chroma/
 .cache/
 models/
 
-
 # OS
 .DS_Store
 Thumbs.db
 
-
 # Jupyter
 .ipynb_checkpoints/
-
 
 # Testing / coverage
 .pytest_cache/
 .coverage
 htmlcov/
 
-
 # Docker
 docker-compose.override.yml
-
 
 # Planning
 plan/
 
-# Git directory placeholders - never commit .gitkeep files in editor ouputs
+# Git directory placeholders — never commit .gitkeep files in editor outputs
 !**/.gitkeep
-
 
 # Misc.
 docs/hardware_baseline.txt
+
+# Frontend — React / Vite
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.vite/
+frontend/.env*.local

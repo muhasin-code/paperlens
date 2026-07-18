@@ -1,0 +1,167 @@
+[
+  {
+    "model": "llama3.2:1b",
+    "run": 1,
+    "prompt": "What is LoRA and how does it work?",
+    "total_tokens": 213,
+    "ttft_ms": 404.1953790001571,
+    "tokens_per_sec": 9.637190799946628,
+    "peak_rss_mb": 48.5625,
+    "total_latency_ms": 22101.876409999022,
+    "generated_text": "LoRa (Long Range) is a wireless communication technology that operates on the 26 GHz frequency band, which is used for low-power, wide-area networks (LPWANs). It's designed to provide reliable and efficient connectivity over long distances, making it suitable for applications such as industrial automation, smart cities, and IoT devices.\n\nHere's how LoRa works:\n\n**Key Components:**\n\n1. **Transmitter:** The transmitter is the device that sends data to the receiver. In LoRa cases, this can be a microcontroller or a dedicated transceiver module.\n2. **Receiver:** The receiver is the device that receives data from the transmitter. It's typically an antenna and a low-power amplifier.\n3. **Antenna:** The antenna is used to transmit and receive signals. For LoRa, it's usually a directional antenna with a high gain.\n\n**How LoRa Works:**\n\n1. **Data Encoding:** The transmitter encodes the data into a unique identifier (UID) using a technique called frequency hopping spread spectrum (FHSS).\n2. **Frequency Hopping:** The transmitter uses a frequency hop scheme to transmit the encoded data over multiple frequencies, which helps to reduce interference and improve reliability.\n3. **Signal Modulation:** The transmitter modulates the"
+  },
+  {
+    "model": "llama3.2:1b",
+    "run": 2,
+    "prompt": "What is LoRA and how does it work?",
+    "total_tokens": 202,
+    "ttft_ms": 541.5427770003589,
+    "tokens_per_sec": 9.095979177421446,
+    "peak_rss_mb": 48.609375,
+    "total_latency_ms": 22207.61460200083,
+    "generated_text": "LoRa (Long Range) is a wireless communication technology that allows devices to communicate with each other over long distances, typically up to several kilometers. It's commonly used for IoT (Internet of Things) applications, such as smart cities, industrial automation, and asset tracking.\n\nHere's how LoRa works:\n\n**Key Components:**\n\n1. **Transmitter:** The device that sends the data signal.\n2. **Receiver:** The device that receives the data signal.\n3. **Antenna:** The physical component that converts electrical signals into radio waves and vice versa.\n\n**How it Works:**\n\n1. **Data Encoding:** The transmitter encodes the data to be transmitted using a specific protocol, such as LoRaWAN (Long Range Wide Area Network).\n2. **Modulation:** The encoded data is modulated onto a carrier wave using techniques like amplitude shift keying (ASK) or frequency hopping spread spectrum (FHSS).\n3. **Transmission:** The transmitter sends the modulated signal to the nearest LoRa node, which is typically a base station.\n4. **Reception:** The receiver at the base station receives the signal and demodulates it back into its original form using the same protocol as the transmitter.\n\n**LoRaWAN:**\n\nLoRaW"
+  },
+  {
+    "model": "llama3.2:1b",
+    "run": 3,
+    "prompt": "What is LoRA and how does it work?",
+    "total_tokens": 201,
+    "ttft_ms": 481.0179770011018,
+    "tokens_per_sec": 9.079681473827327,
+    "peak_rss_mb": 48.62890625,
+    "total_latency_ms": 22137.340454000878,
+    "generated_text": "LoRa (Long Range) is a wireless communication technology that allows devices to communicate with each other over long distances, typically up to several kilometers. It's often used for applications such as industrial automation, smart cities, and IoT (Internet of Things) devices.\n\nHere's how LoRa works:\n\n**Key Components:**\n\n1. **Transmitter:** The device that sends the data signal.\n2. **Receiver:** The device that receives the data signal.\n3. **Antenna:** The physical component that transmits and receives the signal.\n4. **LoRaWAN Network:** A cellular network infrastructure that enables LoRa communication.\n\n**How it Works:**\n\n1. **Data Encoding:** The transmitter encodes the data into a radio frequency (RF) signal using a specific modulation scheme, such as Frequency Shift Keying (FSK).\n2. **Transmission:** The encoded RF signal is transmitted to the LoRaWAN network via an antenna.\n3. **Network Reception:** The receiver detects the incoming RF signal and decodes it back into its original data format.\n4. **Data Processing:** The received data is processed by the device, which may perform additional tasks such as filtering, encryption, or storage.\n\n**LoRaWAN Network Architecture:**\n\nThe LoRa"
+  },
+  {
+    "model": "llama3.2:1b",
+    "run": 1,
+    "prompt": "Explain the transformer architecture in simple terms.",
+    "total_tokens": 230,
+    "ttft_ms": 444.09084699873347,
+    "tokens_per_sec": 10.434110198026671,
+    "peak_rss_mb": 49.23046875,
+    "total_latency_ms": 22043.087108999316,
+    "generated_text": "The Transformer architecture is a type of neural network that's particularly well-suited for natural language processing tasks, such as text classification and machine translation.\n\nHere's how it works in simple terms:\n\n**Imagine you're trying to translate a sentence from English to Spanish**\n\n1. You start by looking at the words in your input sentence (e.g., \"hello world\").\n2. You compare each word with its corresponding word in the target language (e.g., \"hola mundo\").\n3. The Transformer architecture uses these comparisons to create a new representation of the input sentence, called an **encoder output**.\n4. This encoder output is like a compact summary of the original sentence.\n\n**Now, imagine you're trying to predict what word will come next in the Spanish sentence**\n\n1. You look at the previous words in the sentence (e.g., \"hola mundo\").\n2. You compare each previous word with its corresponding word in the target language.\n3. The Transformer architecture uses these comparisons to create a new representation of the input sentence, called an **encoder output**.\n4. This encoder output is like a compact summary of the original sentence.\n\n**The magic happens**\n\n5. The Transformer architecture uses this encoded sentence (the encoder output) as input to another neural network"
+  },
+  {
+    "model": "llama3.2:1b",
+    "run": 2,
+    "prompt": "Explain the transformer architecture in simple terms.",
+    "total_tokens": 210,
+    "ttft_ms": 516.5663190000487,
+    "tokens_per_sec": 9.494056490700045,
+    "peak_rss_mb": 49.28125,
+    "total_latency_ms": 22119.101587999467,
+    "generated_text": "The Transformer architecture is a type of neural network that's particularly well-suited for natural language processing tasks, such as text classification and machine translation.\n\nHere's how it works in simple terms:\n\n**Imagine you're trying to translate a sentence from English to French**\n\n1. **Input**: You give the model an input sentence, like \"Bonjour, comment ça va?\" (Hello, how are you?).\n2. **Encoder**: The model breaks down the input sentence into smaller pieces called \"tokens\" or \"words\". It's like taking apart a puzzle and analyzing each piece separately.\n3. **Decoder**: The model then uses these tokens to generate an output sentence, one word at a time. This is similar to writing out the words of the original sentence in reverse order.\n\n**The magic happens here**\n\n4. **Self-attention mechanism**: The model looks at each token and how it relates to other tokens. It's like looking at a map and seeing which roads connect different parts of the city.\n5. **Weighted sum**: The model calculates a weighted sum of all the relevant tokens, where the weights represent the importance of each token in the original sentence.\n6. **Output**: The final output is the generated sentence, with each word carefully selected based on its"
+  },
+  {
+    "model": "llama3.2:1b",
+    "run": 3,
+    "prompt": "Explain the transformer architecture in simple terms.",
+    "total_tokens": 237,
+    "ttft_ms": 422.6038470005733,
+    "tokens_per_sec": 10.724677895166588,
+    "peak_rss_mb": 49.390625,
+    "total_latency_ms": 22098.56578600011,
+    "generated_text": "The Transformer architecture is a type of neural network that's particularly well-suited for natural language processing tasks, such as text classification and machine translation.\n\nHere's how it works in simple terms:\n\n**Imagine you're trying to translate a sentence from English to Spanish**\n\nYou have a large dictionary of words and their translations. But instead of looking up each word individually, the Transformer architecture uses something called **self-attention** to weigh the importance of each word in the original sentence.\n\nHere's how it works:\n\n1. The input sentence is broken down into smaller chunks, like individual words or subwords (smaller units of words).\n2. Each chunk is then fed into a neural network layer that processes the information.\n3. The output from this layer is used to compute a **score** for each word in the original sentence, based on how well it fits with the surrounding words.\n\nThis score is called the **attention weight**, and it's what allows the Transformer architecture to focus on the most relevant words in the input sentence.\n\nThe key idea behind self-attention is that each word can be thought of as a separate entity, and the Transformer architecture treats them all equally. This means that the model doesn't need to look up individual words; instead, it uses their relationships with"
+  },
+  {
+    "model": "llama3.2:1b",
+    "run": 1,
+    "prompt": "How do recent papers approach learning rate scheduling?",
+    "total_tokens": 223,
+    "ttft_ms": 413.3018880002055,
+    "tokens_per_sec": 10.093251140844146,
+    "peak_rss_mb": 49.4375,
+    "total_latency_ms": 22093.971198000872,
+    "generated_text": "Recent papers on learning rate scheduling have made significant progress in addressing some of the limitations and challenges associated with traditional methods. Here are some key approaches:\n\n1. **Adaptive learning rates**: Researchers have proposed adaptive learning rates that adjust the step size based on the model's performance, such as during training or testing. For example, a study by He et al. (2020) used an adaptive learning rate schedule that adjusted the step size every 10-20 epochs.\n2. **Gradient-based scheduling**: Gradient-based methods, like Adam and RMSProp, have been extended to learn schedules based on gradients. A paper by Li et al. (2021) proposed a gradient-based learning rate scheduler that adapts the learning rate based on the magnitude of the gradients.\n3. **Exponential decay schedules**: Exponential decay schedules, such as exponential decay with a fixed step size or a schedule that decays exponentially over time, have been explored. A study by Chen et al. (2020) used an exponential decay schedule to adapt the learning rate during training.\n4. **Multi-step learning rate scheduling**: Researchers have proposed multi-step learning rate schedules that adjust the learning rate based on multiple steps or epochs. For example, a paper by Li et al. (2021)"
+  },
+  {
+    "model": "llama3.2:1b",
+    "run": 2,
+    "prompt": "How do recent papers approach learning rate scheduling?",
+    "total_tokens": 264,
+    "ttft_ms": 484.6598800013453,
+    "tokens_per_sec": 11.836487251287378,
+    "peak_rss_mb": 49.46875,
+    "total_latency_ms": 22303.914531001283,
+    "generated_text": "Recent papers have made significant contributions to the field of learning rate scheduling, which is a crucial component of deep learning algorithms. Here are some approaches that researchers have explored:\n\n1. **Adaptive Learning Rate Schedulers**: Researchers have proposed various adaptive learning rate schedulers that adjust the learning rate based on the model's performance on a validation set or during training. For example, some papers use a combination of exponential decay and learning rate reduction to adapt to changing conditions.\n2. **Gradient Clipping and Normalization**: Some papers have explored using gradient clipping and normalization to prevent exploding gradients and improve convergence. Gradient clipping reduces the magnitude of gradients, while normalization ensures that the gradients are within a reasonable range.\n3. **Adversarial Training**: Researchers have used adversarial training to optimize learning rate schedulers. Adversarial training involves training a model to predict the input data with an adversary (e.g., a small perturbation) and then using this prediction to adjust the learning rate.\n4. **Meta-Learning**: Meta-learning has been applied to learning rate scheduling by training models to learn how to adapt their learning rates based on new tasks or environments. This approach can lead to more robust and generalizable learning rate schedulers.\n5. **Hybrid Approaches**: Some papers have"
+  },
+  {
+    "model": "llama3.2:1b",
+    "run": 3,
+    "prompt": "How do recent papers approach learning rate scheduling?",
+    "total_tokens": 199,
+    "ttft_ms": 475.50747399873217,
+    "tokens_per_sec": 8.979065363791369,
+    "peak_rss_mb": 49.4921875,
+    "total_latency_ms": 22162.663031998818,
+    "generated_text": "Recent papers have made significant contributions to the field of learning rate scheduling, which is a crucial component of deep learning algorithms. Here are some approaches that researchers have explored:\n\n1. **Adaptive Learning Rate Schedulers**: Researchers have proposed various adaptive learning rate schedulers that adjust the learning rate based on the model's performance on a validation set or during training. For example:\n * \"Learning Rate Scheduling for Deep Neural Networks\" by Chen et al. (2020) [1]\n * \"Adaptive Learning Rate Scheduling for Deep Learning\" by Li et al. (2019) [2]\n2. **Gradient Clipping and Normalization**: Some papers have explored the use of gradient clipping and normalization to stabilize training and improve convergence. For instance:\n * \"Gradient Clipping for Stabilizing Training in Deep Neural Networks\" by Chen et al. (2020) [3]\n * \"Normalizing Gradient for Deep Learning\" by Li et al. (2019) [4]\n3. **Adversarial Training**: Researchers have used adversarial training to improve the robustness of deep neural networks and adapt to changing environments. For example:\n * \"Adversarial Training for Robust Neural Networks\" by Chen et al. (2020) [5]\n"
+  },
+  {
+    "model": "llama3.2:1b",
+    "run": 1,
+    "prompt": "What are the key differences between RNNs and Transformers?",
+    "total_tokens": 228,
+    "ttft_ms": 489.889291999134,
+    "tokens_per_sec": 10.25184079560055,
+    "peak_rss_mb": 50.08984375,
+    "total_latency_ms": 22239.90837800011,
+    "generated_text": "Recurrent Neural Networks (RNNs) and Transformers are two distinct architectures used in natural language processing (NLP) tasks, such as text classification, sentiment analysis, and machine translation. Here are the key differences:\n\n**1. Architecture:**\n\t* RNNs: Use a feedback loop to process sequential data, where each neuron's output depends on its previous input. The architecture typically consists of an encoder-decoder structure with recurrent connections.\n\t* Transformers: Employ self-attention mechanisms and feed-forward neural networks (FFNNs) to process sequential data. They have a more flexible and scalable architecture compared to RNNs.\n\n**2. Input/Output Structure:**\n\t* RNNs: Typically take in sequences of input data, such as words or characters, and produce output sequences.\n\t* Transformers: Can handle any sequence length and can be used for both input and output processing (e.g., text classification, sentiment analysis).\n\n**3. Training Objective:**\n\t* RNNs: Often use a sequence-to-sequence objective function, where the goal is to predict the next word in a sentence based on the previous words.\n\t* Transformers: Typically use a masked language modeling or next sentence prediction objective function, which involves predicting missing tokens or identifying"
+  },
+  {
+    "model": "llama3.2:1b",
+    "run": 2,
+    "prompt": "What are the key differences between RNNs and Transformers?",
+    "total_tokens": 209,
+    "ttft_ms": 464.6112460013683,
+    "tokens_per_sec": 9.46561538796925,
+    "peak_rss_mb": 50.1328125,
+    "total_latency_ms": 22079.916776001483,
+    "generated_text": "Recurrent Neural Networks (RNNs) and Transformers are two distinct architectures used in natural language processing (NLP) tasks, particularly for sequence-to-sequence problems. Here are the key differences:\n\n**1. Architecture:**\n\t* RNNs: Use a feedback loop to process sequential data, where each neuron's output depends on its past inputs. The architecture consists of an input layer, one or more hidden layers, and an output layer.\n\t* Transformers: Utilize self-attention mechanisms to process sequential data, without relying on feedback loops. They consist of an encoder-decoder structure with multiple layers.\n\n**2. Sequence Processing:**\n\t* RNNs: Designed for processing sequential data (e.g., time series, text) where the order of elements matters.\n\t* Transformers: Can handle variable-length sequences and are more suitable for tasks like machine translation, question-answering, and text generation.\n\n**3. Attention Mechanism:**\n\t* RNNs: Use a fixed attention mechanism that is applied to each input element separately.\n\t* Transformers: Employ self-attention mechanisms, which allow the model to weigh the importance of different input elements relative to each other.\n\n**4. Model Complexity:**\n\t* RNNs: Typically"
+  },
+  {
+    "model": "llama3.2:1b",
+    "run": 3,
+    "prompt": "What are the key differences between RNNs and Transformers?",
+    "total_tokens": 222,
+    "ttft_ms": 404.27158000056806,
+    "tokens_per_sec": 10.030810873635673,
+    "peak_rss_mb": 50.15625,
+    "total_latency_ms": 22131.809959999373,
+    "generated_text": "Recurrent Neural Networks (RNNs) and Transformers are two distinct architectures used in natural language processing (NLP) tasks, such as text classification, sentiment analysis, and machine translation. Here are the key differences:\n\n**1. Architecture:**\n\t* RNNs: Use a feedback loop to process sequential data, where each neuron's output depends on its previous input. The architecture typically consists of an encoder-decoder structure with recurrent connections.\n\t* Transformers: Utilize self-attention mechanisms to model relationships between different parts of the input sequence. They consist of a sequence-to-sequence model with attention and feed-forward networks.\n\n**2. Input/Output Structure:**\n\t* RNNs: Typically process sequential data in a fixed-length window (e.g., 1-10 tokens).\n\t* Transformers: Can handle variable-length input sequences, allowing for more flexibility in modeling complex relationships between words or subwords.\n\n**3. Training Objective:**\n\t* RNNs: Often use sequence-to-sequence loss functions, such as mean squared error (MSE) or cross-entropy.\n\t* Transformers: Typically employ masked language modeling (MLM), where the model predicts which tokens in a sentence are missing and then calculates the loss based on the predicted token"
+  },
+  {
+    "model": "llama3.2:1b",
+    "run": 1,
+    "prompt": "Summarize the attention mechanism in one paragraph.",
+    "total_tokens": 167,
+    "ttft_ms": 532.7044330006174,
+    "tokens_per_sec": 12.61692030635863,
+    "peak_rss_mb": 50.80859375,
+    "total_latency_ms": 13236.193615000957,
+    "generated_text": "The attention mechanism is a crucial component of neural networks, allowing them to selectively focus on certain inputs while ignoring others. It works by comparing the input features with a set of weights and biases, and then determining which features are most relevant for the task at hand. This process involves calculating a weighted sum of the input features, where the weights represent the importance or relevance of each feature. The attention mechanism uses this weighted sum to compute a \"attention score\" that represents how well each feature aligns with the task's goals. By comparing these scores across different inputs, the network can selectively attend to the most relevant features and allocate more computational resources to them, leading to improved performance in tasks such as image recognition, natural language processing, and speech recognition."
+  },
+  {
+    "model": "llama3.2:1b",
+    "run": 2,
+    "prompt": "Summarize the attention mechanism in one paragraph.",
+    "total_tokens": 140,
+    "ttft_ms": 481.4575899999909,
+    "tokens_per_sec": 12.501925411486345,
+    "peak_rss_mb": 50.81640625,
+    "total_latency_ms": 11198.275097000078,
+    "generated_text": "The attention mechanism is a crucial component of neural networks, allowing them to selectively focus on certain inputs while ignoring others. It works by comparing the input features with a set of learned weights, known as attention weights or scores, which are computed based on the input features and the network's internal state. The attention mechanism then selects the most relevant input features for further processing, effectively \"selecting\" which neurons to activate. This process is typically implemented using a dot product operation between the input features and the attention weights, resulting in a weighted sum of the input features that represents the importance of each feature for the current task or prediction."
+  },
+  {
+    "model": "llama3.2:1b",
+    "run": 3,
+    "prompt": "Summarize the attention mechanism in one paragraph.",
+    "total_tokens": 160,
+    "ttft_ms": 455.1780339988909,
+    "tokens_per_sec": 12.776768329232313,
+    "peak_rss_mb": 50.8203125,
+    "total_latency_ms": 12522.728429999916,
+    "generated_text": "The attention mechanism is a fundamental concept in artificial intelligence and machine learning that allows systems to selectively focus on certain parts of the input data while ignoring others. It works by comparing the relevance or importance of different features or elements within the input data, and then allocating more computational resources (e.g., processing power) to the most relevant ones. This is typically achieved through a process called \"attention weights,\" which are learned during training on large datasets. The attention mechanism can be thought of as a filter that selectively attends to certain parts of the input data while discarding others, allowing the system to focus on the most critical information and improve its overall performance in tasks such as image recognition, natural language processing, and speech recognition."
+  }
+]
