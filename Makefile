@@ -69,9 +69,13 @@ embed-dry:
 
 # ─── Development Server ───────────────────────────────────────────────────────────
 
-run:
+run-backend:
 	@echo "-> Starting FastAPI dev server on http://localhost:8000 ..."
 	uvicorn src.paperlens.main:app --reload --host 0.0.0.0 --port 8000
+
+run-frontend:
+	@echo "-> Starting the React backend server on http://localhost:3000 ..."
+	cd frontend/ && npm run dev
 
 
 # ─── Benchmarking ─────────────────────────────────────────────────────────────────
@@ -102,12 +106,13 @@ help:
 	@echo " make lint 			Ruff lint check (no changes)"
 	@echo " make format			Ruff format + auto-fix (modifies files)"
 	@echo " make test			Run pytest suite"
-	@echo " make run			Start FastAPI dev server"
-	@echo " make benchmark      Run Ollama inference benchmarks (tokens/sec, TTFT, RAM)"
+	@echo " make run-backend		Start FastAPI dev server"
+	@echo " make run-frontend		Start React dev server"
+	@echo " make benchmark      		Run Ollama inference benchmarks (tokens/sec, TTFT, RAM)"
 	@echo " make clean			Remove __pycache__, .pyc, pytest and coverage artifacts"
 	@echo " make ingest			Run full arXiv ingestion pipeline"
-	@echo " make ingest-dry		Preview what would be ingested (no downloads)"
+	@echo " make ingest-dry			Preview what would be ingested (no downloads)"
 	@echo " make parse			Run full PDF parsing pipeline"
-	@echo " make parse-dry		Preview parsing on 5 papers (no writes)"
+	@echo " make parse-dry			Preview parsing on 5 papers (no writes)"
 	@echo " make embed			Run full embedding pipeline into ChromaDB"
 	@echo " make embed-dry 		Preview embedding on 5 chunks (no writes)"
