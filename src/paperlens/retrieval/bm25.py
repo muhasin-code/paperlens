@@ -40,7 +40,13 @@ class BM25Retriever:
     DEFAULT_K1 = 1.5
     DEFAULT_B = 0.75
 
-    def __init__(self, chunks: list[Chunk], k1: float = DEFAULT_K1, b: float = DEFAULT_B):
+    def __init__(
+        self,
+        chunks: list[Chunk],
+        k1: float = DEFAULT_K1,
+        b: float = DEFAULT_B,
+        index_path: Path | None = None,
+    ):
         """Initialize BM25 retriever with chunks.
 
         Args:
@@ -55,6 +61,7 @@ class BM25Retriever:
         self._tokenized_corpus: list[list[str]] = []
         self._build_time_ms: float = 0.0
         self._build_start: float = 0.0
+        self._index_path = index_path or self.INDEX_PATH
 
     def _tokenize(self, text: str) -> list[str]:
         """Simple whitespace + lowercase tokenization.
@@ -156,16 +163,21 @@ class BM25Retriever:
             "build_time_ms": self._build_time_ms,
         }
 
-        self.INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
-        joblib.dump(persist_data, self.INDEX_PATH)
+        self._index_path.parent.mkdir(parents=True, exist_ok=True)
+        joblib.dump(persist_data, self._index_path)
 
-        file_size = self.INDEX_PATH.stat().st_size
+        file_size = self._index_path.stat().st_size
 
         return {
             "file_path": str(self.INDEX_PATH),
             "file_size_bytes": file_size,
             "file_size_kb": file_size / 1024,
         }
+
+    @property
+    def index_path(self) -> Path:
+        """Return the path this retriever's index is persisted to."""
+        return self._index_path
 
     @classmethod
     def load(cls, index_path: Path | None = None) -> "BM25Retriever":
