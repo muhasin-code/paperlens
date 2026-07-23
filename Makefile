@@ -67,6 +67,22 @@ embed-dry:
 	python scripts/embed.py --dry-run --limit 5
 
 
+# ─── BM25 Keyword Index (Phase 2) ───────────────────────────────────────────────────────────
+
+bm25-build:
+	@echo "-> Building BM25 keyword index..."
+	python scripts/build_bm25.py;
+
+bm25-rebuild:
+	@echo "-> Rebuilding BM25 keyword index..."
+	python scripts/build_bm25.py --rebuild
+
+bm25-clean:
+	@echo "-> Removing BM25 index..."
+	rm -f data/bm25_index.pkl
+	@echo "BM25 index removed."
+
+
 # ─── Development Server ───────────────────────────────────────────────────────────
 
 run-backend:
@@ -106,6 +122,9 @@ help:
 	@echo " make lint 			Ruff lint check (no changes)"
 	@echo " make format			Ruff format + auto-fix (modifies files)"
 	@echo " make test			Run pytest suite"
+	@echo " make bm25-build     Build BM25 keyword index from chunks.parquet"
+	@echo " make bm25-rebuild	Rebuild BM25 keyword index from chunks.parquet forcefully"
+	@echo " make bm25-clean     Remove data/bm25_index.pkl"
 	@echo " make run-backend		Start FastAPI dev server"
 	@echo " make run-frontend		Start React dev server"
 	@echo " make benchmark      		Run Ollama inference benchmarks (tokens/sec, TTFT, RAM)"
