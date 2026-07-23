@@ -70,3 +70,15 @@ class HealthResponse(BaseModel):
     ollama_reachable: bool = Field(..., description="Whether Ollama responded to /api/tags.")
     ollama_model: str = Field(..., description="Configured Ollama model (settings.ollama_model).")
     ollama_fallback_model: str = Field(..., description="Fallback model name (llama3.2:1b).")
+
+
+class Bm25SearchRequest(BaseModel):
+    """Request payload for the /retrieval/bm25 debug endpoint."""
+
+    query: str = Field(
+        ...,
+        min_length=1,
+        max_length=2000,
+        description="Natural language query for BM25 keyword search.",
+    )
+    top_k: int = Field(default=5, ge=1, le=50, description="Number of BM25 results to return.")

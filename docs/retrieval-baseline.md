@@ -167,3 +167,101 @@ RetrievalResult[]             # ranked by score = 1 - cosine_distance
 ---
 
 *Baseline recorded: 2026-07-10*
+
+---
+
+# BM25 Keyword Index (Phase 2.1)
+
+This section records the BM25 sparse retrieval index built as part of Milestone 2.1. It complements the semantic index documented above.
+
+## Model and Parameters
+
+| Field | Value |
+|---|---|
+| **Library** | `rank_bm25 >= 0.2.2` (`BM25Okapi` variant) |
+| **k1** | 1.5 (term frequency saturation) |
+| **b** | 0.75 (document length normalization) |
+| **Tokenization** | Whitespace split + lowercase (no stemming; CPU-fast) |
+| **Persistence** | `joblib.dump` (pickle-based serialization) to `data/bm25_index.pkl` |
+| **Index path (settings)** | `settings.bm25_index_path` → `./data/bm25_index.pkl` |
+
+## Index Statistics
+
+| Metric | Value |
+|---|---|
+| **Corpus size** | 17,330 chunks (from `data/processed/chunks.parquet`) |
+| **Vocabulary size** | _fill_ unique terms |
+| **Build time** | _fill_ ms |
+| **Index file size** | 112.1 MB (117,540,215 bytes) |
+| **Index path** | `data/bm25_index.pkl` |
+
+> **Fill in the values above** from the output of `make bm25-build` (run with `--rebuild` to see stats).
+
+## Rebuild Instructions
+
+```bash
+# Full rebuild (deletes existing index, rebuilds from chunks.parquet)
+make bm25-build BM25_REBUILD=1
+
+# Or directly:
+python scripts/build_bm25.py --rebuild
+
+# Quick build (skips if index already exists)
+make bm25-build
+
+# Verify the index is functional
+make bm25-verify
+
+# Remove the index
+make bm25-clean
+```
+
+The index is fully deterministic given the same `chunks.parquet` and parameters. Rebuilding after adding new papers to the corpus is the supported workflow for incremental updates (full rebuild required; no partial upsert mechanism exists yet).
+
+## Standalone Debug Endpoint
+
+A standalone debug endpoint is available for inspecting BM25 results without running the full RAG pipeline:
+
+```
+POST /retrieval/bm25
+```
+
+```bash
+curl -s -X POST http://localhost:8000/retrieval/bm25 \
+  -H "Content-Type: application/json" \
+  -d '{"query": "learning rate scheduling", "top_k": 5}' | jq .
+```
+
+Request:
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `query` | `string` | Yes | — | Natural-language query (1–2000 chars) |
+| `top_k` | `integer` | No | `5` | Number of results (1–50) |
+
+Response: array of `BM25Result` objects with `chunk_id`, `score`, `rank`, `arxiv_id`, `title`, `authors`, `section_label`, `page_start`, `page_end`, `text`.
+
+Returns `503 Service Unavailable` if the index has not been built yet (run `make bm25-build`).
+
+## Source Files
+
+| File | Purpose |
+|---|---|
+| `src/paperlens/retrieval/bm25.py` | `BM25Retriever` and `BM25Result` |
+| `src/paperlens/retrieval/__init__.py` | Package init, exports `BM25Retriever` and `BM25Result` |
+| `src/paperlens/api/retrieval_routes.py` | `/retrieval/bm25` debug endpoint |
+| `src/paperlens/api/schemas.py` | `Bm25SearchRequest` schema |
+| `scripts/build_bm25.py` | CLI build script (`--rebuild` flag) |
+| `tests/test_retrieval/test_bm25.py` | 25 unit tests (tmp_path, no I/O) |
+
+## Known Limitations
+
+- **No incremental updates.** New chunks require a full rebuild. No upsert-by-chunk-id mechanism exists yet.
+- **Simple tokenization.** Whitespace + lowercase only — no Porter stemming or lemmatization. Intentional for CPU speed and to avoid over-normalizing technical terms (e.g., "Transformer" vs "transformer").
+- **Static parameters.** k1 and b are fixed at 1.5 and 0.75 (BM25Okapi defaults). Parameter tuning is deferred to Phase 2.2 (RRF fusion evaluation).
+- **No query expansion.** Short or ambiguous queries may under-retrieve. Phase 2.2 RRF fusion with semantic search addresses this.
+- **Memory-bound.** The full index (~17k chunks, tokenized corpus, BM25Okapi object) must fit in RAM. On the 7.6 GB target machine, this is comfortably under 500 MB.
+
+---
+
+*BM25 section added: 2026-07-23*

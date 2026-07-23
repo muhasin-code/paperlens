@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from src.paperlens.api.retrieval_routes import router as retrieval_router
 from src.paperlens.api.routes import router as api_router
 from src.paperlens.settings import get_settings
 
@@ -63,7 +64,8 @@ if FRONTEND_DIST.exists():
         app.mount("/assets", StaticFiles(directory=assets_dir), name="frontend-assets")
 
 # Include API routes (/query, /health, /query/stream)
-app.include_router(api_router)
+app.include_router(api_router, prefix="/api")
+app.include_router(retrieval_router)
 
 
 # SPA catch-all: serve index.html for all non-API, non-static paths

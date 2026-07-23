@@ -23,6 +23,7 @@ credentials.json
 data/raw/
 data/processed/
 data/chroma/
+data/*.pkl
 *.pt
 *.bin
 *.safetensors
