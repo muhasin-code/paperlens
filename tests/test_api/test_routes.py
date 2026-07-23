@@ -47,7 +47,7 @@ class TestQueryEndpoint:
             total_time_ms=1250.0,
         )
 
-        resp = client.post("/query", json={"query": "What is this about?"})
+        resp = client.post("/api/query", json={"query": "What is this about?"})
         assert resp.status_code == 200
         data = resp.json()
         assert data["answer"] == "Test answer [2401.00001v1_chunk_0001]."
@@ -56,7 +56,7 @@ class TestQueryEndpoint:
         assert data["confidence"] == 0.9
 
     def test_query_validates_request_body(self, client):
-        resp = client.post("/query", json={})
+        resp = client.post("/api/query", json={})
         assert resp.status_code == 422  # validation error
 
     def test_query_validates_top_k_bounds(self, client, mock_rag_service):
@@ -68,14 +68,14 @@ class TestQueryEndpoint:
             generation_time_ms=0,
             total_time_ms=0,
         )
-        resp = client.post("/query", json={"query": "test", "top_k": 0})
+        resp = client.post("/api/query", json={"query": "test", "top_k": 0})
         assert resp.status_code == 422
-        resp = client.post("/query", json={"query": "test", "top_k": 21})
+        resp = client.post("/api/query", json={"query": "test", "top_k": 21})
         assert resp.status_code == 422
 
     def test_query_502_on_runtime_error(self, client, mock_rag_service):
         mock_rag_service.query.side_effect = RuntimeError("Both models failed")
-        resp = client.post("/query", json={"query": "test"})
+        resp = client.post("/api/query", json={"query": "test"})
         assert resp.status_code == 502
 
 
@@ -88,7 +88,7 @@ class TestHealthEndpoint:
         mock_rag_service.primary_model = "phi4-mini"
         mock_rag_service.fallback_model = "llama3.2:1b"
 
-        resp = client.get("/health")
+        resp = client.get("/api/health")
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "ok"
@@ -106,7 +106,7 @@ class TestHealthEndpoint:
         mock_rag_service.primary_model = "phi4-mini"
         mock_rag_service.fallback_model = "llama3.2:1b"
 
-        resp = client.get("/health")
+        resp = client.get("/api/health")
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "degraded"
