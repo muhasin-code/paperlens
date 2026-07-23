@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 
+from src.paperlens.embedding.embedder import EmbeddingModel
 from src.paperlens.embedding.models import RetrievalResult
 from src.paperlens.embedding.retriever import SemanticRetriever
 from src.paperlens.parsing.models import Chunk
@@ -17,6 +18,7 @@ class HybridRetriever:
         settings: Settings,
         semantic_retriever: SemanticRetriever | None = None,
         bm25_retriever: BM25Retriever | None = None,
+        embedder: EmbeddingModel | None = None,
     ) -> None:
         """Initialize hybrid retriever.
 
@@ -28,13 +30,14 @@ class HybridRetriever:
         self.settings = settings
         self._semantic_retriever = semantic_retriever
         self._bm25_retriever = bm25_retriever
+        self._embedder = embedder
         self._rrf_k = settings.rrf_k
         self._candidate_pool = settings.hybrid_candidate_pool
 
     def _get_semantic_retriever(self) -> SemanticRetriever:
         """Lazily create SemanticRetriever if not provided."""
         if self._semantic_retriever is None:
-            self._semantic_retriever = SemanticRetriever(self.settings)
+            self._semantic_retriever = SemanticRetriever(self.settings, embedder=self._embedder)
         return self._semantic_retriever
 
     def _get_bm25_retriever(self) -> BM25Retriever:
