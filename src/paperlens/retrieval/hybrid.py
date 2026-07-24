@@ -76,16 +76,32 @@ class HybridRetriever:
         rrf_scores: dict[str, float] = defaultdict(float)
         chunk_map: dict[str, Chunk] = {}
 
+        # For semantic results (RetrievalResult has .chunk)
         for rank, result in enumerate(semantic_results, start=1):
             chunk_id = result.chunk.chunk_id
             rrf_scores[chunk_id] += 1.0 / (self._rrf_k + rank)
             chunk_map[chunk_id] = result.chunk
 
+        # For BM25 results (BM25Result has fields directly, no .chunk)
         for rank, result in enumerate(bm25_results, start=1):
-            chunk_id = result.chunk.chunk_id
+            chunk_id = result.chunk_id  # Direct access
             rrf_scores[chunk_id] += 1.0 / (self._rrf_k + rank)
             if chunk_id not in chunk_map:
-                chunk_map[chunk_id] = result.chunk
+                # Reconstruct Chunk from BM25Result fields
+                chunk_map[chunk_id] = Chunk(
+                    chunk_id=result.chunk_id,
+                    arxiv_id=result.arxiv_id,
+                    title=result.title,
+                    authors=result.authors,
+                    section_label=result.section_label,
+                    chunk_index=0,  # Not stored in BM25Result
+                    page_start=result.page_start,
+                    page_end=result.page_end,
+                    text=result.text,
+                    token_count=len(result.text.split()),
+                    total_chunks_in_section=0,
+                    total_chunks_in_paper=0,
+                )
 
         sorted_chunks = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
 
