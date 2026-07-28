@@ -83,6 +83,13 @@ bm25-clean:
 	@echo "BM25 index removed."
 
 
+# ─── Hybrid Retrieval (Phase 2.2) ─────────────────────────────────────────────
+
+hybrid-verify:
+	@echo "-> Verifying hybrid retrieval..."
+	python scripts/verify_hybrid.py
+
+
 # ─── Development Server ───────────────────────────────────────────────────────────
 
 run-backend:
@@ -125,6 +132,7 @@ help:
 	@echo " make bm25-build     Build BM25 keyword index from chunks.parquet"
 	@echo " make bm25-rebuild	Rebuild BM25 keyword index from chunks.parquet forcefully"
 	@echo " make bm25-clean     Remove data/bm25_index.pkl"
+	@echo " make hybrid-verify    Smoke-test: hybrid retrieval with RRF"
 	@echo " make run-backend		Start FastAPI dev server"
 	@echo " make run-frontend		Start React dev server"
 	@echo " make benchmark      		Run Ollama inference benchmarks (tokens/sec, TTFT, RAM)"
