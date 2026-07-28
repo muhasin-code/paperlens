@@ -11,6 +11,7 @@ import ollama
 from src.paperlens.api.schemas import Citation, QueryRequest, QueryResponse
 from src.paperlens.embedding.embedder import EmbeddingModel
 from src.paperlens.embedding.retriever import RetrievalResult, SemanticRetriever
+from src.paperlens.retrieval.hybrid import HybridRetriever
 from src.paperlens.settings import Settings
 
 logger = logging.getLogger("paperlens.api")
@@ -59,12 +60,25 @@ def _get_embedding_model(settings: Settings) -> EmbeddingModel:
 class RAGService:
     """Orchestrates the end-to-end RAG query pipeline."""
 
-    def __init__(self, settings: Settings, retriever: SemanticRetriever | None = None) -> None:
+    def __init__(
+        self,
+        settings: Settings,
+        retriever: SemanticRetriever | None = None,
+        hybrid_retriever: HybridRetriever | None = None,
+    ) -> None:
         self.settings = settings
-        # Use cached embedding model via singleton retriever
-        self.retriever = retriever or SemanticRetriever(
-            settings, embedder=_get_embedding_model(settings)
-        )
+        self._hybrid_retriever = hybrid_retriever
+        # # Use cached embedding model via singleton retriever
+        # self.retriever = retriever or SemanticRetriever(
+        #     settings, embedder=_get_embedding_model(settings)
+        # )
+        cached_embedder = _get_embedding_model(settings)
+        if hybrid_retriever is not None:
+            self.retriever = hybrid_retriever
+        elif retriever is not None:
+            self.retriever = retriever
+        else:
+            self.retriever = HybridRetriever(settings=settings, embedder=cached_embedder)
         self._ollama_client = ollama.AsyncClient(host=settings.ollama_base_url)
         self.primary_model = settings.ollama_model
         self.fallback_model = FALLBACK_MODEL

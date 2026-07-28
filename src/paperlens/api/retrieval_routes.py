@@ -5,6 +5,7 @@ import logging
 from fastapi import APIRouter, HTTPException, status
 
 from src.paperlens.api.schemas import Bm25SearchRequest
+from src.paperlens.embedding.models import RetrievalResult
 from src.paperlens.retrieval.bm25 import BM25Result, BM25Retriever
 from src.paperlens.settings import get_settings
 
@@ -51,5 +52,25 @@ async def bm25_search_endpoint(request: Bm25SearchRequest) -> list[BM25Result]:
         results = retriever.search(query=request.query, top_k=request.top_k)
     except RuntimeError as exc:
         logger.exception("BM25 search failed")
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return results
+
+
+@router.post(
+    "/hybrid",
+    response_model=list[RetrievalResult],
+    status_code=status.HTTP_200_OK,
+    summary="Hybrid retrieval (semantic + BM25 with RRF)",
+    description="Run semantic and BM25 retrieval in parallel, merge results with Reciprocal Rank Fusion. Return top-k chunks by RRF score.",
+)
+async def hybrid_search_endpoint(request: Bm25SearchRequest) -> list[RetrievalResult]:
+    """Handle POST /retrieval/hybrid — hybrid retrieval debug search."""
+    from src.paperlens.retrieval.hybrid import HybridRetriever
+
+    retriever = HybridRetriever(get_settings())
+    try:
+        results = retriever.search(query=request.query, top_k=request.top_k)
+    except RuntimeError as exc:
+        logger.exception("Hybrid retrieval failed")
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     return results
