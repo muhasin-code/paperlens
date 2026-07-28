@@ -64,7 +64,7 @@ if FRONTEND_DIST.exists():
         app.mount("/assets", StaticFiles(directory=assets_dir), name="frontend-assets")
 
 # Include API routes (/query, /health, /query/stream)
-app.include_router(api_router, prefix="/api")
+app.include_router(api_router)
 app.include_router(retrieval_router)
 
 
