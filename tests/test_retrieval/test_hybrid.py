@@ -137,7 +137,11 @@ class TestHybridRetriever:
                 return_value=mock_bm25_retriever,
             ),
         ):
-            retriever = HybridRetriever(settings)
+            retriever = HybridRetriever(
+                settings,
+                semantic_retriever=mock_semantic_retriever,
+                bm25_retriever=mock_bm25_retriever,
+            )
             results = retriever.search("test", top_k=5)
             assert len(results) == 5
 
@@ -157,7 +161,11 @@ class TestHybridRetriever:
                 return_value=mock_bm25_retriever,
             ),
         ):
-            retriever = HybridRetriever(settings)
+            retriever = HybridRetriever(
+                settings,
+                semantic_retriever=mock_semantic_retriever,
+                bm25_retriever=mock_bm25_retriever,
+            )
             results = retriever.search("test", top_k=5)
             for r in results:
                 assert r.score > 0
@@ -178,7 +186,11 @@ class TestHybridRetriever:
                 return_value=mock_bm25_retriever,
             ),
         ):
-            retriever = HybridRetriever(settings)
+            retriever = HybridRetriever(
+                settings,
+                semantic_retriever=mock_semantic_retriever,
+                bm25_retriever=mock_bm25_retriever,
+            )
             results = retriever.search("test", top_k=5)
             scores = [r.score for r in results]
             assert scores == sorted(scores, reverse=True)
@@ -199,7 +211,11 @@ class TestHybridRetriever:
                 return_value=mock_bm25_retriever,
             ),
         ):
-            retriever = HybridRetriever(settings)
+            retriever = HybridRetriever(
+                settings,
+                semantic_retriever=mock_semantic_retriever,
+                bm25_retriever=mock_bm25_retriever,
+            )
             results = retriever.search("test", top_k=3)
             assert len(results) == 3
 
@@ -233,7 +249,11 @@ class TestHybridRetriever:
                 return_value=mock_bm25,
             ),
         ):
-            retriever = HybridRetriever(settings)
+            retriever = HybridRetriever(
+                settings,
+                semantic_retriever=mock_semantic_retriever,  # fixture param
+                bm25_retriever=mock_bm25,  # local mock
+            )
             results = retriever.search("test", top_k=5)
             chunk_ids = [r.chunk.chunk_id for r in results]
             assert "c5" in chunk_ids
@@ -272,7 +292,11 @@ class TestHybridRetriever:
                 return_value=mock_bm25_retriever,
             ),
         ):
-            retriever = HybridRetriever(settings)
+            retriever = HybridRetriever(
+                settings,
+                semantic_retriever=mock_semantic_retriever,
+                bm25_retriever=mock_bm25_retriever,
+            )
             results = retriever.search("test", top_k=1)
             expected_score = 1.0 / (60 + 1) + 1.0 / (60 + 1)
             assert abs(results[0].score - expected_score) < 0.0001
@@ -294,7 +318,11 @@ class TestHybridRetriever:
                 return_value=mock_bm25_retriever,
             ),
         ):
-            retriever = HybridRetriever(settings)
+            retriever = HybridRetriever(
+                settings,
+                semantic_retriever=mock_semantic,  # local mock
+                bm25_retriever=mock_bm25_retriever,  # fixture param
+            )
             results = retriever.search("test", top_k=5)
             assert len(results) > 0
 
@@ -315,6 +343,10 @@ class TestHybridRetriever:
                 return_value=mock_bm25,
             ),
         ):
-            retriever = HybridRetriever(settings)
+            retriever = HybridRetriever(
+                settings,
+                semantic_retriever=mock_semantic_retriever,  # fixture param
+                bm25_retriever=mock_bm25,  # local mock
+            )
             results = retriever.search("test", top_k=5)
             assert len(results) > 0
