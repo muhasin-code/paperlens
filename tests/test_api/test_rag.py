@@ -57,9 +57,24 @@ def mock_ollama_client():
         yield mock_client
 
 
+@pytest.fixture
+def mock_reranker():
+    """Mock CrossEncoderReranker to return results unchanged."""
+    with patch("src.paperlens.api.rag.CrossEncoderReranker") as mock_reranker_class:
+        mock_reranker = MagicMock()
+        mock_reranker_class.return_value = mock_reranker
+        # Return input results unchanged
+        mock_reranker.rerank.side_effect = (
+            lambda query, results, top_k=None: results[:top_k] if top_k else results
+        )
+        yield mock_reranker
+
+
 class TestRAGService:
     @pytest.mark.asyncio
-    async def test_query_returns_cited_answer(self, settings, mock_retriever, mock_ollama_client):
+    async def test_query_returns_cited_answer(
+        self, settings, mock_retriever, mock_ollama_client, mock_reranker
+    ):
         service = RAGService(settings, retriever=mock_retriever)
         request = QueryRequest(query="What learning rate schedule is proposed?")
         response = await service.query(request)
@@ -84,7 +99,7 @@ class TestRAGService:
 
     @pytest.mark.asyncio
     async def test_query_empty_retrieval_returns_fallback(
-        self, settings, mock_retriever, mock_ollama_client
+        self, settings, mock_retriever, mock_ollama_client, mock_reranker
     ):
         mock_retriever.search.return_value = []
         service = RAGService(settings, retriever=mock_retriever)
@@ -97,7 +112,7 @@ class TestRAGService:
 
     @pytest.mark.asyncio
     async def test_fallback_model_used_on_primary_failure(
-        self, settings, mock_retriever, mock_ollama_client
+        self, settings, mock_retriever, mock_ollama_client, mock_reranker
     ):
         # First call fails, second succeeds
         mock_ollama_client.generate.side_effect = [
@@ -116,7 +131,7 @@ class TestRAGService:
 
     @pytest.mark.asyncio
     async def test_health_check_reports_chroma_and_ollama(
-        self, settings, mock_retriever, mock_ollama_client
+        self, settings, mock_retriever, mock_ollama_client, mock_reranker
     ):
         service = RAGService(settings, retriever=mock_retriever)
         health = await service.health_check()
