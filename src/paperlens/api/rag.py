@@ -12,6 +12,7 @@ from src.paperlens.api.schemas import Citation, QueryRequest, QueryResponse
 from src.paperlens.embedding.embedder import EmbeddingModel
 from src.paperlens.embedding.retriever import RetrievalResult, SemanticRetriever
 from src.paperlens.retrieval.hybrid import HybridRetriever
+from src.paperlens.retrieval.reranker import CrossEncoderReranker
 from src.paperlens.settings import Settings
 
 logger = logging.getLogger("paperlens.api")
@@ -95,6 +96,14 @@ class RAGService:
         results: list[RetrievalResult] = self.retriever.search(
             query=request.query, top_k=request.top_k
         )
+        # 1b) Reranking (after hybrid retrieval)
+        rerank_start = time.perf_counter()
+        reranker = CrossEncoderReranker(self.settings)
+        results = reranker.rerank(
+            query=request.query, results=results, top_k=self.settings.rerank_top_k
+        )
+        rerank_time_ms = (time.perf_counter() - rerank_start) * 1000
+        logger.info("Reranking completed: %d results, %.1f ms", len(results), rerank_time_ms)
         retrieval_time_ms = (time.perf_counter() - retrieval_start) * 1000
 
         if not results:
@@ -141,6 +150,14 @@ class RAGService:
         results: list[RetrievalResult] = self.retriever.search(
             query=request.query, top_k=request.top_k
         )
+        # 1b) Reranking
+        rerank_start = time.perf_counter()
+        reranker = CrossEncoderReranker(self.settings)
+        results = reranker.rerank(
+            query=request.query, results=results, top_k=self.settings.rerank_top_k
+        )
+        rerank_time_ms = (time.perf_counter() - rerank_start) * 1000
+        logger.info("Reranking completed: %d results, %.1f ms", len(results), rerank_time_ms)
         retrieval_time_ms = (time.perf_counter() - retrieval_start) * 1000
 
         if not results:
