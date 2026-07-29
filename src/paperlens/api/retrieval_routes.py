@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, status
 from src.paperlens.api.schemas import Bm25SearchRequest
 from src.paperlens.embedding.models import RetrievalResult
 from src.paperlens.retrieval.bm25 import BM25Result, BM25Retriever
+from src.paperlens.retrieval.reranker import CrossEncoderReranker
 from src.paperlens.settings import get_settings
 
 logger = logging.getLogger("paperlens.api")
@@ -73,4 +74,25 @@ async def hybrid_search_endpoint(request: Bm25SearchRequest) -> list[RetrievalRe
     except RuntimeError as exc:
         logger.exception("Hybrid retrieval failed")
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return results
+
+
+@router.post(
+    "/rerank",
+    response_model=list[RetrievalResult],
+    status_code=status.HTTP_200_OK,
+    summary="Cross-encoder reranking (debug endpoint)",
+    description="Rerank hybrid retrieval results using cross-encoder. Returns top-k chunks ranked by cross-encoder score.",
+)
+async def rerank_endpoint(request: Bm25SearchRequest) -> list[RetrievalResult]:
+    """Handle POST /retrieval/rerank — rerank hybrid retrieval results."""
+    from src.paperlens.retrieval.hybrid import HybridRetriever
+
+    settings = get_settings()
+    hybrid = HybridRetriever(settings)
+    candidates = hybrid.search(query=request.query, top_k=20)
+
+    reranker = CrossEncoderReranker(settings)
+    results = reranker.rerank(query=request.query, results=candidates, top_k=request.top_k)
+
     return results
