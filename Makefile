@@ -90,6 +90,13 @@ hybrid-verify:
 	python scripts/verify_hybrid.py
 
 
+# ─── Cross-Encoder Reranking (Phase 2.3) ─────────────────────────────────────────────
+
+reranker-verify:
+	@echo "-> Verifying cross-encoder reranking..."
+	python scripts/verify_reranker.py
+
+
 # ─── Development Server ───────────────────────────────────────────────────────────
 
 run-backend:
@@ -133,6 +140,7 @@ help:
 	@echo " make bm25-rebuild	Rebuild BM25 keyword index from chunks.parquet forcefully"
 	@echo " make bm25-clean     Remove data/bm25_index.pkl"
 	@echo " make hybrid-verify    Smoke-test: hybrid retrieval with RRF"
+	@echo " make reranker-verify    Smoke-test: cross-encoder reranking"
 	@echo " make run-backend		Start FastAPI dev server"
 	@echo " make run-frontend		Start React dev server"
 	@echo " make benchmark      		Run Ollama inference benchmarks (tokens/sec, TTFT, RAM)"
