@@ -180,4 +180,118 @@ curl -s -X POST http://localhost:8000/retrieval/hybrid \
 
 ---
 
+## Cross-Encoder Reranking (Phase 2.3)
+
+### Overview: Retriever vs Reranker
+
+| Aspect | Bi-Encoder Retriever | Cross-Encoder Reranker |
+|---|---|---|
+| **Model type** | Bi-encoder (separate query and document encoders) | Cross-encoder (joint encoding of query+document) |
+| **Speed** | Fast (~200-300 ms for 17k chunks on CPU) | Slower (~200-500 ms for 20 chunks on CPU) |
+| **Accuracy** | Good, but lower precision | Higher precision, captures query-document interactions |
+| **Use case** | First-stage retrieval (broad recall) | Second-stage reranking (refine top candidates) |
+| **Memory** | ~1.3 GB (BGE model) | ~85 MB (cross-encoder) |
+
+### Why Rerank a Small Candidate Pool?
+
+Reranking is computationally expensive because the cross-encoder processes query-document pairs sequentially. On CPU:
+
+- **Reranking all 17,330 chunks** would take minutes (each pair processed independently)
+- **Reranking 20 candidates** takes ~200-500 ms (acceptable latency)
+
+The hybrid retriever already narrows the search space to the top 20 RRF candidates. Reranking this small pool is cost-effective and dramatically improves precision.
+
+### Model Details
+
+| Field | Value |
+|---|---|
+| **Model** | `cross-encoder/ms-marco-MiniLM-L-12-v2` |
+| **Size** | ~85 MB (downloads from HuggingFace on first run, then cached) |
+| **Framework** | `sentence-transformers.CrossEncoder` |
+| **Inference mode** | CPU (no CUDA required) |
+| **Settings** | `settings.reranker_model`, `settings.rerank_top_k` |
+
+### Expected Latency on CPU
+
+On the Dell Latitude 7490 (Intel UHD 620, 7.6 GB RAM, CPU-only):
+
+| Operation | Latency (ms) |
+|---|---|
+| Load model (first run) | ~1-2 seconds (download + cache) |
+| Load model (subsequent runs) | ~100-200 ms |
+| Rerank 20 candidates | ~200-500 ms |
+| Rerank 5 candidates | ~50-150 ms |
+
+The model is loaded once and cached in memory for the process lifetime.
+
+### Memory Impact
+
+| Component | Memory Usage |
+|---|---|
+| BM25 index | ~117 MB |
+| ChromaDB + embeddings | ~400 MB |
+| BGE embedding model | ~1.3 GB |
+| Cross-encoder reranker | ~85 MB |
+| **Total** | ~1.9 GB |
+
+On a 7.6 GB RAM system, this leaves ~5 GB for OS and Ollama LLM inference.
+
+### Reranker Flow
+
+```
+User query
+    ↓
+HybridRetriever.search() → top 20 candidates (RRF scores)
+    ↓
+CrossEncoderReranker.rerank() → top 5 (cross-encoder scores)
+    ↓
+LLM prompt (with top 5 chunks)
+```
+
+### Debug Endpoint: POST /retrieval/rerank
+
+```bash
+curl -s -X POST http://localhost:8000/retrieval/rerank \
+  -H "Content-Type: application/json" \
+  -d '{"query": "learning rate scheduling", "top_k": 5}' | jq .
+```
+
+**Request:**
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `query` | `string` | Yes | — | Natural-language query (1–2000 chars) |
+| `top_k` | `integer` | No | `5` | Number of reranked results (1–20) |
+
+**Response:** Array of `RetrievalResult` objects with `chunk_id`, `score` (cross-encoder score), `rank`, `chunk` (full metadata).
+
+### Structured Logging for Langfuse Observability (Phase 4)
+
+Each reranker score is logged per chunk:
+
+```
+Reranker score: chunk_id=2401.07597v2_chunk_0003 score=0.923456
+```
+
+The log line includes `chunk_id` and the cross-encoder `score`, enabling Phase 4 Langfuse integration to track reranker performance and identify quality issues.
+
+### Source Files
+
+| File | Purpose |
+|---|---|
+| `src/paperlens/retrieval/reranker.py` | `CrossEncoderReranker` class |
+| `src/paperlens/retrieval/__init__.py` | Package init, exports `CrossEncoderReranker` |
+| `src/paperlens/api/rag.py` | `RAGService` applies reranker |
+| `src/paperlens/api/retrieval_routes.py` | `/retrieval/rerank` endpoint |
+| `tests/test_retrieval/test_reranker.py` | Unit tests |
+| `scripts/verify_reranker.py` | Smoke test |
+| `Makefile` | `reranker-verify` target |
+
+### Known Limitations
+
+- **CPU-only latency:** Reranking 20 candidates takes 200-500 ms; acceptable for high-quality answers
+- **Sequential pair processing:** Cross-encoder scores are computed one pair at a time
+- **Model must be loaded:** First run downloads ~85 MB model; subsequent runs use cache
+- **No GPU acceleration:** On CPU-only hardware, reranking is the new latency bottleneck after retrieval
+
 *Document created: 2026-07-23*
