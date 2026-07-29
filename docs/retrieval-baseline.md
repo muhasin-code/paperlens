@@ -264,4 +264,79 @@ Returns `503 Service Unavailable` if the index has not been built yet (run `make
 
 ---
 
+## Cross-Encoder Reranking (Phase 2.3)
+
+This section documents the cross-encoder reranking system that refines hybrid retrieval results.
+
+### Configuration Parameters
+
+| Parameter | Default | Description |
+|---|---|---|
+| **RERANKER_MODEL** | `cross-encoder/ms-marco-MiniLM-L-12-v2` | HuggingFace model identifier |
+| **RERANK_TOP_K** | 5 | Number of top candidates passed to LLM after reranking |
+
+### Retriever vs Reranker: Why Two Stages?
+
+| Aspect | Bi-Encoder Retriever | Cross-Encoder Reranker |
+|---|---|---|
+| Speed | Fast (~200-300 ms) | Slower (~200-500 ms for 20 chunks) |
+| Accuracy | Good | Higher precision |
+| Use case | First-stage recall | Second-stage refinement |
+| Model size | ~1.3 GB | ~85 MB |
+
+### Reranking Flow
+
+```
+Query → HybridRetriever.search(top_k=20)
+    ↓
+CrossEncoderReranker.rerank(top_k=5)
+    ↓
+LLM prompt (top 5 chunks with cross-encoder scores)
+```
+
+### Latency Baseline (CPU-only)
+
+| Operation | Latency (ms) |
+|---|---|
+| Rerank 20 candidates | 200-500 |
+| Rerank 5 candidates | 50-150 |
+| Model load (first run) | 1000-2000 (download) |
+| Model load (cached) | 100-200 |
+
+### Memory Impact
+
+| Component | Memory |
+|---|---|
+| BM25 index | ~117 MB |
+| ChromaDB + embeddings | ~400 MB |
+| BGE embedding model | ~1.3 GB |
+| Cross-encoder reranker | ~85 MB |
+| **Total** | ~1.9 GB |
+
+### Debug Endpoint: POST /retrieval/rerank
+
+```bash
+POST /retrieval/rerank
+
+curl -s -X POST http://localhost:8000/retrieval/rerank \
+  -H "Content-Type: application/json" \
+  -d '{"query": "learning rate scheduling", "top_k": 5}' | jq .
+```
+
+### Source Files
+
+| File | Purpose |
+|---|---|
+| `src/paperlens/retrieval/reranker.py` | `CrossEncoderReranker` class |
+| `src/paperlens/api/rag.py` | `RAGService` applies reranker |
+| `src/paperlens/api/retrieval_routes.py` | `/retrieval/rerank` endpoint |
+| `tests/test_retrieval/test_reranker.py` | Unit tests |
+| `scripts/verify_reranker.py` | Smoke test |
+
+### Known Limitations
+
+- CPU-only reranking adds 200-500 ms latency
+- Model download (~85 MB) required on first run
+- Cross-encoder processes pairs sequentially
+
 *BM25 section added: 2026-07-23*
