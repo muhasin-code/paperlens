@@ -64,8 +64,8 @@ def mock_reranker():
         mock_reranker = MagicMock()
         mock_reranker_class.return_value = mock_reranker
         # Return input results unchanged
-        mock_reranker.rerank.side_effect = (
-            lambda query, results, top_k=None: results[:top_k] if top_k else results
+        mock_reranker.rerank.side_effect = lambda query, results, top_k=None: (
+            results[:top_k] if top_k else results
         )
         yield mock_reranker
 
