@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 
 from src.paperlens.api.schemas import Bm25SearchRequest
 from src.paperlens.embedding.models import RetrievalResult
@@ -64,13 +64,23 @@ async def bm25_search_endpoint(request: Bm25SearchRequest) -> list[BM25Result]:
     summary="Hybrid retrieval (semantic + BM25 with RRF)",
     description="Run semantic and BM25 retrieval in parallel, merge results with Reciprocal Rank Fusion. Return top-k chunks by RRF score.",
 )
-async def hybrid_search_endpoint(request: Bm25SearchRequest) -> list[RetrievalResult]:
+async def hybrid_search_endpoint(
+    request: Request, body: Bm25SearchRequest
+) -> list[RetrievalResult]:
     """Handle POST /retrieval/hybrid — hybrid retrieval debug search."""
     from src.paperlens.retrieval.hybrid import HybridRetriever
 
-    retriever = HybridRetriever(get_settings())
+    settings = get_settings()
+    embedding_model = getattr(request.app.state, "embedding_model", None)
+    bm25_retriever = getattr(request.app.state, "bm25_retriever", None)
+
+    retriever = HybridRetriever(
+        settings=settings,
+        embedder=embedding_model,
+        bm25_retriever=bm25_retriever,
+    )
     try:
-        results = retriever.search(query=request.query, top_k=request.top_k)
+        results = retriever.search(query=body.query, top_k=body.top_k)
     except RuntimeError as exc:
         logger.exception("Hybrid retrieval failed")
         raise HTTPException(status_code=502, detail=str(exc)) from exc
@@ -84,15 +94,21 @@ async def hybrid_search_endpoint(request: Bm25SearchRequest) -> list[RetrievalRe
     summary="Cross-encoder reranking (debug endpoint)",
     description="Rerank hybrid retrieval results using cross-encoder. Returns top-k chunks ranked by cross-encoder score.",
 )
-async def rerank_endpoint(request: Bm25SearchRequest) -> list[RetrievalResult]:
+async def rerank_endpoint(request: Request, body: Bm25SearchRequest) -> list[RetrievalResult]:
     """Handle POST /retrieval/rerank — rerank hybrid retrieval results."""
     from src.paperlens.retrieval.hybrid import HybridRetriever
 
     settings = get_settings()
-    hybrid = HybridRetriever(settings)
-    candidates = hybrid.search(query=request.query, top_k=20)
+    embedding_model = getattr(request.app.state, "embedding_model", None)
+    bm25_retriever = getattr(request.app.state, "bm25_retriever", None)
+
+    hybrid = HybridRetriever(
+        settings=settings,
+        embedder=embedding_model,
+        bm25_retriever=bm25_retriever,
+    )
+    candidates = hybrid.search(query=body.query, top_k=settings.hybrid_candidate_pool)
 
     reranker = CrossEncoderReranker(settings)
-    results = reranker.rerank(query=request.query, results=candidates, top_k=request.top_k)
-
+    results = reranker.rerank(query=body.query, results=candidates, top_k=body.top_k)
     return results
