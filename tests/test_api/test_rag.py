@@ -70,10 +70,20 @@ def mock_reranker():
         yield mock_reranker
 
 
+@pytest.fixture
+def mock_vector_store():
+    """Mock VectorStore to avoid real ChromaDB connection in RAGService.__init__."""
+    with patch("src.paperlens.api.rag.VectorStore") as mock_vs_class:
+        mock_vs = MagicMock()
+        mock_vs_class.return_value = mock_vs
+        mock_vs.count.return_value = 17330
+        yield mock_vs
+
+
 class TestRAGService:
     @pytest.mark.asyncio
     async def test_query_returns_cited_answer(
-        self, settings, mock_retriever, mock_ollama_client, mock_reranker
+        self, settings, mock_retriever, mock_ollama_client, mock_reranker, mock_vector_store
     ):
         service = RAGService(settings, retriever=mock_retriever)
         request = QueryRequest(query="What learning rate schedule is proposed?")
@@ -99,7 +109,7 @@ class TestRAGService:
 
     @pytest.mark.asyncio
     async def test_query_empty_retrieval_returns_fallback(
-        self, settings, mock_retriever, mock_ollama_client, mock_reranker
+        self, settings, mock_retriever, mock_ollama_client, mock_reranker, mock_vector_store
     ):
         mock_retriever.search.return_value = []
         service = RAGService(settings, retriever=mock_retriever)
@@ -112,7 +122,7 @@ class TestRAGService:
 
     @pytest.mark.asyncio
     async def test_fallback_model_used_on_primary_failure(
-        self, settings, mock_retriever, mock_ollama_client, mock_reranker
+        self, settings, mock_retriever, mock_ollama_client, mock_reranker, mock_vector_store
     ):
         # First call fails, second succeeds
         mock_ollama_client.generate.side_effect = [
@@ -131,7 +141,7 @@ class TestRAGService:
 
     @pytest.mark.asyncio
     async def test_health_check_reports_chroma_and_ollama(
-        self, settings, mock_retriever, mock_ollama_client, mock_reranker
+        self, settings, mock_retriever, mock_ollama_client, mock_reranker, mock_vector_store
     ):
         service = RAGService(settings, retriever=mock_retriever)
         health = await service.health_check()
