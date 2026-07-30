@@ -21,7 +21,7 @@ FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan: startup/shutdown logging + warm embedding model."""
+    """Application lifespan: load all heavy resources once at startup."""
     settings = get_settings()
     import logging
 
@@ -29,14 +29,39 @@ async def lifespan(app: FastAPI):
     logger = logging.getLogger("paperlens")
     logger.info("PaperLens API starting on %s:%d", settings.api_host, settings.api_port)
 
-    # Warm the embedding model (loads BGE model into memory)
-    logger.info("Warming embedding model...")
-    from src.paperlens.embedding.embedder import EmbeddingModel
+    # 1) Load embedding model into module-level cache AND app.state
+    logger.info("Loading embedding model %s...", settings.embedding_model)
+    from src.paperlens.api.rag import _get_embedding_model
 
-    _ = EmbeddingModel(settings)
-    logger.info("Embedding model warmed.")
+    embedding_model = _get_embedding_model(settings)
+    app.state.embedding_model = embedding_model
+    logger.info(
+        "Embedding model loaded (dim=%d, device=%s)",
+        embedding_model.dimension,
+        embedding_model.device,
+    )
+
+    # 2) Load BM25 index into module-level singleton AND app.state
+    logger.info("Loading BM25 index from %s...", settings.bm25_index_path)
+    from src.paperlens.api.retrieval_routes import get_bm25_retriever
+
+    try:
+        bm25_retriever = get_bm25_retriever()
+        app.state.bm25_retriever = bm25_retriever
+        logger.info("BM25 index loaded: %d chunks", len(bm25_retriever.chunks))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("BM25 index not loaded at startup: %s. Run 'make bm25-build'.", exc)
+        app.state.bm25_retriever = None
+
+    # 3) Warm cross-encoder class-level singleton
+    logger.info("Loading cross-encoder model %s...", settings.reranker_model)
+    from src.paperlens.retrieval.reranker import CrossEncoderReranker
+
+    CrossEncoderReranker.get_model(settings.reranker_model)
+    logger.info("Cross-encoder model loaded.")
 
     yield
+
     logger.info("PaperLens API shutting down")
 
 
