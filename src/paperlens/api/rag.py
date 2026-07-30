@@ -11,6 +11,7 @@ import ollama
 from src.paperlens.api.schemas import Citation, QueryRequest, QueryResponse
 from src.paperlens.embedding.embedder import EmbeddingModel
 from src.paperlens.embedding.retriever import RetrievalResult, SemanticRetriever
+from src.paperlens.embedding.vector_store import VectorStore
 from src.paperlens.retrieval.hybrid import HybridRetriever
 from src.paperlens.retrieval.reranker import CrossEncoderReranker
 from src.paperlens.settings import Settings
@@ -80,6 +81,13 @@ class RAGService:
             self.retriever = retriever
         else:
             self.retriever = HybridRetriever(settings=settings, embedder=cached_embedder)
+
+        # Store reranker instance (model is a class-level singleton, loaded once)
+        self._reranker = CrossEncoderReranker(self.settings)
+
+        # Store VectorStore for health checks
+        self._vector_store = VectorStore(self.settings)
+
         self._ollama_client = ollama.AsyncClient(host=settings.ollama_base_url)
         self.primary_model = settings.ollama_model
         self.fallback_model = FALLBACK_MODEL
@@ -98,8 +106,7 @@ class RAGService:
         )
         # 1b) Reranking (after hybrid retrieval)
         rerank_start = time.perf_counter()
-        reranker = CrossEncoderReranker(self.settings)
-        results = reranker.rerank(
+        results = self._reranker.rerank(
             query=request.query, results=results, top_k=self.settings.rerank_top_k
         )
         rerank_time_ms = (time.perf_counter() - rerank_start) * 1000
@@ -152,8 +159,7 @@ class RAGService:
         )
         # 1b) Reranking
         rerank_start = time.perf_counter()
-        reranker = CrossEncoderReranker(self.settings)
-        results = reranker.rerank(
+        results = self._reranker.rerank(
             query=request.query, results=results, top_k=self.settings.rerank_top_k
         )
         rerank_time_ms = (time.perf_counter() - rerank_start) * 1000
@@ -281,10 +287,7 @@ class RAGService:
         if self._health_cache and (now - self._health_cache[0]) < self._health_ttl:
             return self._health_cache[1]
 
-        from src.paperlens.embedding.vector_store import VectorStore
-
-        store = VectorStore(self.settings)
-        chroma_count = store.count()
+        chroma_count = self._vector_store.count()
 
         ollama_ok = False
         try:
