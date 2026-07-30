@@ -33,7 +33,7 @@ class EmbeddingModel:
         self.batch_size = batch_size
         self.device = "cpu"  # CPU-only box; override via settings if GPU available
         self._model = SentenceTransformer(self.model_name, device=self.device)
-        self.dimension = self._model.get_sentence_embedding_dimension()
+        self.dimension = self._model.get_embedding_dimension()
         self.logger = logger
         self.logger.info(
             "Loaded embedding model %s (dim=%d, device=%s)",
