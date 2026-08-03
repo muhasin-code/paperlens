@@ -2,12 +2,15 @@
 
 import json
 import logging
+import re
 import time
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 
 import ollama
+from pydantic import BaseModel
 
+from src.paperlens.api.prompt_loader import PromptLoader
 from src.paperlens.api.schemas import Citation, QueryRequest, QueryResponse
 from src.paperlens.embedding.embedder import EmbeddingModel
 from src.paperlens.embedding.retriever import RetrievalResult, SemanticRetriever
@@ -20,20 +23,6 @@ logger = logging.getLogger("paperlens.api")
 
 # Fallback model if primary fails (CPU-friendly, already small)
 FALLBACK_MODEL = "llama3.2:1b"
-
-# Prompt template (moved to configs/prompts/ in Phase 2.4)
-RAG_PROMPT_TEMPLATE = """You are a research assistant answering questions about ML/AI papers from arXiv.
-Use ONLY the provided context chunks to answer. Each chunk is marked with its [chunk_id].
-Cite every claim by including the [chunk_id] in square brackets at the end of the sentence.
-If the context does not contain enough information to answer, respond exactly:
-"I cannot answer from the provided sources."
-
-Context chunks:
-{context}
-
-Question: {query}
-
-Answer:"""
 
 
 @dataclass
@@ -57,6 +46,35 @@ def _get_embedding_model(settings: Settings) -> EmbeddingModel:
 
         _embedding_model_cache = EmbeddingModel(settings)
     return _embedding_model_cache
+
+
+class LLMOutput(BaseModel):
+    """Structured validation for LLM output."""
+
+    answer: str
+
+    @classmethod
+    def validate_response(cls, text: str, refusal_message: str) -> tuple[bool, str]:
+        """Validate LLM response.
+
+        Returns:
+            tuple of (is_valid, reason_or_answer)
+            - (True, text) if validation passes
+            - (False, refusal_message) if response matches refusal pattern
+            - (False, "invalid") if response is empty or missing citation markers
+        """
+        if not text or not text.strip():
+            return False, "invalid"
+
+        text = text.strip()
+
+        if text == refusal_message:
+            return False, refusal_message
+
+        if not re.search(r"\[\w+\]", text):
+            return False, "invalid"
+
+        return True, text
 
 
 class RAGService:
@@ -87,6 +105,9 @@ class RAGService:
 
         # Store VectorStore for health checks
         self._vector_store = VectorStore(self.settings)
+
+        self._prompt_loader = PromptLoader(self.settings)
+        self._prompt_template = self._prompt_loader.load_prompt()
 
         self._ollama_client = ollama.AsyncClient(host=settings.ollama_base_url)
         self.primary_model = settings.ollama_model
@@ -130,14 +151,27 @@ class RAGService:
         generation_start = time.perf_counter()
         gen_result = await self._generate_with_fallback(request.query, context, request.model)
         generation_time_ms = (time.perf_counter() - generation_start) * 1000
+        total_time_ms = (time.perf_counter() - total_start) * 1000
+        # Check for refusal response
+        if gen_result.text.strip() == self._prompt_template.refusal_message:
+            return QueryResponse(
+                answer=gen_result.text.strip(),
+                citations=[],
+                confidence=0.0,
+                retrieval_time_ms=retrieval_time_ms,
+                generation_time_ms=generation_time_ms,
+                total_time_ms=total_time_ms,
+            )
 
         # 4) Build citations from retrieval results
         citations = self._build_citations(results)
 
-        # 5) Confidence heuristic (placeholder for Phase 2.4 citation validator)
-        confidence = self._compute_confidence(results)
-
-        total_time_ms = (time.perf_counter() - total_start) * 1000
+        # Heuristic confidence from retrieval scores
+        if results:
+            top_scores = [r.score for r in results[:3]]
+            confidence = max(0.0, min(1.0, sum(top_scores) / len(top_scores)))
+        else:
+            confidence = 0.0
 
         return QueryResponse(
             answer=gen_result.text.strip(),
@@ -181,8 +215,9 @@ class RAGService:
 
         # 4) LLM generation (with fallback) - stream tokens
         generation_start = time.perf_counter()
-        prompt = RAG_PROMPT_TEMPLATE.format(context=context, query=request.query)
+        prompt = self._prompt_template.format(context=context, query=request.query)
         model = request.model or self.primary_model
+        response_text = ""
 
         for attempt, m in enumerate((model, self.fallback_model)):
             try:
@@ -197,10 +232,16 @@ class RAGService:
                     token = chunk.get("response", "")
                     if token:
                         yield f"data: {json.dumps({'token': token})}\n\n"
+                        response_text += chunk
                 # Generation complete
                 generation_time_ms = (time.perf_counter() - generation_start) * 1000
                 total_time_ms = (time.perf_counter() - total_start) * 1000
-                confidence = self._compute_confidence(results)
+                # Heuristic confidence from retrieval scores
+                if results:
+                    top_scores = [r.score for r in results[:3]]
+                    confidence = max(0.0, min(1.0, sum(top_scores) / len(top_scores)))
+                else:
+                    confidence = 0.0
                 yield f"data: {json.dumps({'generation_time_ms': generation_time_ms, 'total_time_ms': total_time_ms, 'confidence': confidence, 'model': m, 'done': True})}\n\n"
                 return
             except Exception as exc:  # noqa: BLE001
@@ -210,6 +251,11 @@ class RAGService:
                 raise RuntimeError(
                     f"Both primary ({self.primary_model}) and fallback ({self.fallback_model}) models failed"
                 ) from exc
+
+        # Check for refusal
+        if response_text.strip() == self._prompt_template.refusal_message:
+            yield f"data: {json.dumps({'answer': response_text.strip(), 'citations': [], 'confidence': 0.0, 'generation_time_ms': generation_time_ms, 'total_time_ms': total_time_ms, 'done': True})}\n\n"
+            return
 
         raise RuntimeError("Generation loop exited unexpectedly")
 
@@ -223,35 +269,69 @@ class RAGService:
         return "\n---\n".join(parts)
 
     async def _generate_with_fallback(
-        self, query: str, context: str, model_override: str | None
+        self, query: str, context: str, model_override: str | None, attempt: int = 0
     ) -> GenerationResult:
-        """Call Ollama generate; on failure, retry once with fallback model."""
-        prompt = RAG_PROMPT_TEMPLATE.format(context=context, query=query)
-        model = model_override or self.primary_model
+        """Call Ollama generate; on failure, retry once for malformed output, then fall back.
 
-        for attempt, m in enumerate((model, self.fallback_model)):
+        Args:
+            query: Original query string
+            context: Assembled context chunks
+            model_override: Optional model override
+            attempt: Current retry attempt (0 = first try, 1 = first retry, 2 = fallback)
+
+        Retry logic:
+        - First call (attempt 0): with primary model
+        - If malformed output: retry with same model (attempt 1)
+        - If second attempt also malformed: fall back to secondary model (attempt 2)
+        - Maximum 2 retries to avoid compounding latency on slow CPU
+        """
+        prompt = self._prompt_template.build_prompt(context=context, query=query)
+        model = model_override or self.primary_model
+        refusal_msg = self._prompt_template.refusal_message
+
+        max_retries = 2
+        for retry in range(max_retries + 1):
             try:
-                logger.info("Generating with model=%s (attempt %d)", m, attempt + 1)
+                logger.info(
+                    "Generating with model=%s (attempt %d, retry %d)",
+                    model,
+                    attempt + 1,
+                    retry + 1,
+                )
                 start = time.perf_counter()
                 resp = await self._ollama_client.generate(
-                    model=m,
+                    model=model,
                     prompt=prompt,
                     options={"temperature": 0.1, "num_predict": 256},
                 )
                 latency_ms = (time.perf_counter() - start) * 1000
                 text = resp.get("response", "")
-                if not text.strip():
-                    raise ValueError("Empty response from Ollama")
-                return GenerationResult(text=text, model_used=m, latency_ms=latency_ms)
+
+                is_valid, result = LLMOutput.validate_response(text, refusal_msg)
+
+                if is_valid:
+                    return GenerationResult(text=text, model_used=model, latency_ms=latency_ms)
+
+                if result == refusal_msg:
+                    return GenerationResult(text=text, model_used=model, latency_ms=latency_ms)
+
+                logger.warning(
+                    "LLM output validation failed (attempt %d): response missing citation markers",
+                    retry + 1,
+                )
+
+                if retry < max_retries:
+                    continue
+
             except Exception as exc:  # noqa: BLE001
-                logger.warning("Ollama generation failed with %s: %s", m, exc)
+                logger.warning("Ollama generation failed with %s: %s", model, exc)
                 if attempt == 0:
-                    continue  # try fallback
+                    continue
                 raise RuntimeError(
                     f"Both primary ({self.primary_model}) and fallback ({self.fallback_model}) models failed"
                 ) from exc
 
-        raise RuntimeError("Generation loop exited unexpectedly")
+        raise RuntimeError("Generation retry logic exhausted unexpectedly")
 
     def _build_citations(self, results: list[RetrievalResult]) -> list[Citation]:
         """Convert RetrievalResult objects to Citation schema objects."""
@@ -272,14 +352,6 @@ class RAGService:
                 )
             )
         return citations
-
-    def _compute_confidence(self, results: list[RetrievalResult]) -> float:
-        """Heuristic: mean of top-3 scores, clamped to [0, 1]."""
-        if not results:
-            return 0.0
-        top_scores = [r.score for r in results[:3]]
-        mean_score = sum(top_scores) / len(top_scores)
-        return max(0.0, min(1.0, mean_score))
 
     async def health_check(self) -> dict:
         """Check ChromaDB collection count and Ollama reachability (cached 10s)."""
