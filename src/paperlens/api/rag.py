@@ -71,7 +71,7 @@ class LLMOutput(BaseModel):
         if text == refusal_message:
             return False, refusal_message
 
-        if not re.search(r"\[\w+\]", text):
+        if not re.search(r"\[[^\]]+\]", text):
             return False, "invalid"
 
         return True, text
@@ -323,9 +323,12 @@ class RAGService:
                 if retry < max_retries:
                     continue
 
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("Ollama generation failed with %s: %s", model, exc)
                 if attempt == 0:
+                    # Switch to fallback model for the retry
+                    model = self.fallback_model
+                    attempt = 1
                     continue
                 raise RuntimeError(
                     f"Both primary ({self.primary_model}) and fallback ({self.fallback_model}) models failed"
