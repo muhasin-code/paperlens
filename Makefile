@@ -97,6 +97,13 @@ reranker-verify:
 	python scripts/verify_reranker.py
 
 
+# ─── Citation Enforcement (Phase 2.4) ─────────────────────────────────────────────
+
+prompt-verify:
+	@echo "-> Verifying prompt loading..."
+	python scripts/verify_prompt.py
+
+
 # ─── Development Server ───────────────────────────────────────────────────────────
 
 run-backend:
@@ -141,6 +148,7 @@ help:
 	@echo " make bm25-clean     Remove data/bm25_index.pkl"
 	@echo " make hybrid-verify    Smoke-test: hybrid retrieval with RRF"
 	@echo " make reranker-verify    Smoke-test: cross-encoder reranking"
+	@echo " make prompt-verify      Smoke-test: prompt loader"
 	@echo " make run-backend		Start FastAPI dev server"
 	@echo " make run-frontend		Start React dev server"
 	@echo " make benchmark      		Run Ollama inference benchmarks (tokens/sec, TTFT, RAM)"
