@@ -1,7 +1,6 @@
 """Prompt loader: versioned YAML prompts with in-memory caching."""
 
 import logging
-from pathlib import Path
 from typing import Any
 
 import yaml
@@ -35,21 +34,9 @@ class PromptTemplate:
 class PromptLoader:
     """Loads and caches prompt templates from versioned YAML files."""
 
-    _cache: dict[str, PromptTemplate] = {}
-
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or Settings()
-        self._yaml_path: Path | None = None
-
-    def _get_yaml_path(self) -> Path:
-        """Construct the path to the prompt YAML file.
-
-        Uses settings.prompts_dir and settings.prompt_version to locate the file.
-        Default path: {prompts_dir}/{prompt_version}.yaml
-        """
-        if self._yaml_path is None:
-            self._yaml_path = self.settings.prompts_dir / f"{self.settings.prompt_version}.yaml"
-        return self._yaml_path
+        self._cache: dict[str, PromptTemplate] = {}
 
     def load_prompt(self, version: str | None = None) -> PromptTemplate:
         """Load prompt template from YAML file.
@@ -66,7 +53,8 @@ class PromptLoader:
             logger.debug("Returning cached prompt version: %s", ver)
             return self._cache[ver]
 
-        yaml_path = self._get_yaml_path()
+        # Construct path for the specific version (not cached)
+        yaml_path = self.settings.prompts_dir / f"{ver}.yaml"
 
         if not yaml_path.exists():
             raise FileNotFoundError(f"Prompt file not found: {yaml_path}")
