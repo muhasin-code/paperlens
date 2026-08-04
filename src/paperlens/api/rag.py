@@ -341,7 +341,9 @@ class RAGService:
                     return GenerationResult(text=text, model_used=model, latency_ms=latency_ms)
 
                 if result == refusal_msg:
-                    return GenerationResult(text=text, model_used=model, latency_ms=latency_ms)
+                    return GenerationResult(
+                        text=refusal_msg, model_used=model, latency_ms=latency_ms
+                    )
 
                 logger.warning(
                     "LLM output validation failed (attempt %d): response missing citation markers",

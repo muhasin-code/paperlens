@@ -176,10 +176,10 @@ class TestRefusalAndRetry:
             mock_client = AsyncMock()
             mock_client_class.return_value = mock_client
 
-            # First call returns empty, second call succeeds
+            # First call returns empty (triggers retry), second call succeeds
             mock_client.generate.side_effect = [
-                {"response": ""},
-                {"response": "Fallback answer [2401.00001v1_chunk_0001]."},
+                {"response": ""},  # Empty response triggers retry per validate_response lines 60-61
+                {"response": "Valid answer [2401.00001v1_chunk_0001]."},
             ]
             mock_client.list.return_value = {"models": [{"name": "phi4-mini"}]}
 
@@ -188,7 +188,7 @@ class TestRefusalAndRetry:
 
             response = await service.query(request)
 
-            assert response.answer == "Fallback answer [2401.00001v1_chunk_0001]."
+            assert response.answer == "Valid answer [2401.00001v1_chunk_0001]."
             assert mock_client.generate.call_count == 2
 
     @pytest.mark.asyncio
@@ -200,9 +200,9 @@ class TestRefusalAndRetry:
             mock_client = AsyncMock()
             mock_client_class.return_value = mock_client
 
-            # First call lacks citations, second call succeeds
+            # First call returns empty (triggers retry), second call succeeds
             mock_client.generate.side_effect = [
-                {"response": "This is an answer without citations."},
+                {"response": ""},  # Empty triggers retry
                 {"response": "Valid answer [2401.00001v1_chunk_0001]."},
             ]
             mock_client.list.return_value = {"models": [{"name": "phi4-mini"}]}
