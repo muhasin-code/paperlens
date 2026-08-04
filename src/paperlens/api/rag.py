@@ -54,24 +54,50 @@ class LLMOutput(BaseModel):
     answer: str
 
     @classmethod
-    def validate_response(cls, text: str, refusal_message: str) -> tuple[bool, str]:
-        """Validate LLM response.
-
-        Returns:
-            tuple of (is_valid, reason_or_answer)
-            - (True, text) if validation passes
-            - (False, refusal_message) if response matches refusal pattern
-            - (False, "invalid") if response is empty or missing citation markers
-        """
+    def validate_response(
+        cls, text: str, refusal_message: str, has_context: bool = True
+    ) -> tuple[bool, str]:
         if not text or not text.strip():
             return False, "invalid"
 
         text = text.strip()
 
+        # Exact match
         if text == refusal_message:
             return False, refusal_message
 
-        if not re.search(r"\[[^\]]+\]", text):
+        # Check for citation markers
+        has_citations = bool(re.search(r"\[[^\]]+\]", text))
+
+        if not has_citations:
+            # If we have context but no citations, likely a refusal
+            if has_context:
+                # Check for refusal-like language
+                refusal_phrases = [
+                    "cannot answer",
+                    "can't answer",
+                    "unable to answer",
+                    "don't know",
+                    "do not know",
+                    "insufficient information",
+                    "not enough information",
+                    "not in the context",
+                    "not provided in the context",
+                    "context does not contain",
+                    "no information",
+                    "cannot find",
+                    "i don't know",
+                    "i cannot",
+                    "i am unable",
+                    "not mentioned",
+                    "not found",
+                ]
+                text_lower = text.lower()
+                if any(phrase in text_lower for phrase in refusal_phrases):
+                    return False, refusal_message
+                # Even without explicit refusal phrases, if context exists but no citations,
+                # treat as implicit refusal to avoid retries
+                return False, refusal_message
             return False, "invalid"
 
         return True, text
@@ -153,9 +179,9 @@ class RAGService:
         generation_time_ms = (time.perf_counter() - generation_start) * 1000
         total_time_ms = (time.perf_counter() - total_start) * 1000
         # Check for refusal response
-        if gen_result.text.strip() == self._prompt_template.refusal_message:
+        if self._prompt_template.refusal_message in gen_result.text:
             return QueryResponse(
-                answer=gen_result.text.strip(),
+                answer=self._prompt_template.refusal_message,
                 citations=[],
                 confidence=0.0,
                 retrieval_time_ms=retrieval_time_ms,
@@ -253,8 +279,8 @@ class RAGService:
                 ) from exc
 
         # Check for refusal
-        if response_text.strip() == self._prompt_template.refusal_message:
-            yield f"data: {json.dumps({'answer': response_text.strip(), 'citations': [], 'confidence': 0.0, 'generation_time_ms': generation_time_ms, 'total_time_ms': total_time_ms, 'done': True})}\n\n"
+        if self._prompt_template.refusal_message in response_text:
+            yield f"data: {json.dumps({'answer': self._prompt_template.refusal_message, 'citations': [], 'confidence': 0.0, 'generation_time_ms': generation_time_ms, 'total_time_ms': total_time_ms, 'done': True})}\n\n"
             return
 
         raise RuntimeError("Generation loop exited unexpectedly")
@@ -288,6 +314,7 @@ class RAGService:
         prompt = self._prompt_template.build_prompt(context=context, query=query)
         model = model_override or self.primary_model
         refusal_msg = self._prompt_template.refusal_message
+        has_context = bool(context and context.strip())
 
         max_retries = 2
         for retry in range(max_retries + 1):
@@ -306,8 +333,9 @@ class RAGService:
                 )
                 latency_ms = (time.perf_counter() - start) * 1000
                 text = resp.get("response", "")
+                logger.debug("LLM raw response: %s", text[:200])
 
-                is_valid, result = LLMOutput.validate_response(text, refusal_msg)
+                is_valid, result = LLMOutput.validate_response(text, refusal_msg, has_context)
 
                 if is_valid:
                     return GenerationResult(text=text, model_used=model, latency_ms=latency_ms)

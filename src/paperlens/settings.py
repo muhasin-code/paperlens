@@ -59,7 +59,7 @@ class Settings(BaseSettings):
 
     # ── Ollama ──────────────────────────────────────────────────────────────
     ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "llama3.2:1b"
+    ollama_model: str = "phi4-mini"
 
     # ── Prompts (Phase 2) ───────────────────────────────────────────────────
     prompts_dir: Path = Field(default=Path("./configs/prompts"))
