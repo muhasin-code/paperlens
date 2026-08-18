@@ -16,7 +16,6 @@ from src.paperlens.embedding.embedder import EmbeddingModel
 from src.paperlens.embedding.retriever import RetrievalResult, SemanticRetriever
 from src.paperlens.embedding.vector_store import VectorStore
 from src.paperlens.retrieval.hybrid import HybridRetriever
-from src.paperlens.retrieval.reranker import CrossEncoderReranker
 from src.paperlens.settings import Settings
 
 logger = logging.getLogger("paperlens.api")
@@ -114,10 +113,6 @@ class RAGService:
     ) -> None:
         self.settings = settings
         self._hybrid_retriever = hybrid_retriever
-        # # Use cached embedding model via singleton retriever
-        # self.retriever = retriever or SemanticRetriever(
-        #     settings, embedder=_get_embedding_model(settings)
-        # )
         cached_embedder = _get_embedding_model(settings)
         if hybrid_retriever is not None:
             self.retriever = hybrid_retriever
@@ -126,10 +121,7 @@ class RAGService:
         else:
             self.retriever = HybridRetriever(settings=settings, embedder=cached_embedder)
 
-        # Store reranker instance (model is a class-level singleton, loaded once)
-        self._reranker = CrossEncoderReranker(self.settings)
-
-        # Store VectorStore for health checks
+        # VectorStore for health checks
         self._vector_store = VectorStore(self.settings)
 
         self._prompt_loader = PromptLoader(self.settings)
@@ -146,18 +138,11 @@ class RAGService:
         """Execute the full RAG pipeline for a single query."""
         total_start = time.perf_counter()
 
-        # 1) Retrieval
+        # 1) Retrieval (Hybrid RRF only - reranker disabled per M2.5 benchmark)
         retrieval_start = time.perf_counter()
         results: list[RetrievalResult] = self.retriever.search(
             query=request.query, top_k=request.top_k
         )
-        # 1b) Reranking (after hybrid retrieval)
-        rerank_start = time.perf_counter()
-        results = self._reranker.rerank(
-            query=request.query, results=results, top_k=self.settings.rerank_top_k
-        )
-        rerank_time_ms = (time.perf_counter() - rerank_start) * 1000
-        logger.info("Reranking completed: %d results, %.1f ms", len(results), rerank_time_ms)
         retrieval_time_ms = (time.perf_counter() - retrieval_start) * 1000
 
         if not results:
@@ -178,6 +163,7 @@ class RAGService:
         gen_result = await self._generate_with_fallback(request.query, context, request.model)
         generation_time_ms = (time.perf_counter() - generation_start) * 1000
         total_time_ms = (time.perf_counter() - total_start) * 1000
+
         # Check for refusal response
         if self._prompt_template.refusal_message in gen_result.text:
             return QueryResponse(
@@ -212,18 +198,11 @@ class RAGService:
         """Execute the full RAG pipeline with SSE streaming."""
         total_start = time.perf_counter()
 
-        # 1) Retrieval
+        # 1) Retrieval (Hybrid RRF only - reranker disabled per M2.5 benchmark)
         retrieval_start = time.perf_counter()
         results: list[RetrievalResult] = self.retriever.search(
             query=request.query, top_k=request.top_k
         )
-        # 1b) Reranking
-        rerank_start = time.perf_counter()
-        results = self._reranker.rerank(
-            query=request.query, results=results, top_k=self.settings.rerank_top_k
-        )
-        rerank_time_ms = (time.perf_counter() - rerank_start) * 1000
-        logger.info("Reranking completed: %d results, %.1f ms", len(results), rerank_time_ms)
         retrieval_time_ms = (time.perf_counter() - retrieval_start) * 1000
 
         if not results:
@@ -258,7 +237,7 @@ class RAGService:
                     token = chunk.get("response", "")
                     if token:
                         yield f"data: {json.dumps({'token': token})}\n\n"
-                        response_text += chunk
+                        response_text += token
                 # Generation complete
                 generation_time_ms = (time.perf_counter() - generation_start) * 1000
                 total_time_ms = (time.perf_counter() - total_start) * 1000
