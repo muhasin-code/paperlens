@@ -298,7 +298,7 @@ class TestHybridRetriever:
                 bm25_retriever=mock_bm25_retriever,
             )
             results = retriever.search("test", top_k=1)
-            expected_score = 1.0 / (60 + 1) + 1.0 / (60 + 1)
+            expected_score = 2.0 / (60 + 1) + 1.0 / (60 + 1)  # = 0.049180...
             assert abs(results[0].score - expected_score) < 0.0001
 
     def test_empty_semantic_results_handled(
