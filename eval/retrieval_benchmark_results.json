@@ -1,0 +1,2225 @@
+{
+  "timestamp": "2026-08-18 05:05:27 UTC",
+  "dataset_size": 26,
+  "strategies": [
+    "baseline",
+    "hybrid",
+    "hybrid_reranker",
+    "semantic_reranker"
+  ],
+  "metrics": [
+    "precision_at_5",
+    "recall_at_5",
+    "hit_at_5",
+    "mrr",
+    "paper_precision_at_5",
+    "paper_hit_at_5"
+  ],
+  "averages": {
+    "baseline": {
+      "precision_at_5": 0.423076923076923,
+      "recall_at_5": 0.2115384615384615,
+      "hit_at_5": 0.8846153846153846,
+      "mrr": 0.6826923076923077,
+      "paper_precision_at_5": 0.5923076923076922,
+      "paper_hit_at_5": 0.9615384615384616
+    },
+    "hybrid": {
+      "precision_at_5": 0.5153846153846153,
+      "recall_at_5": 0.25769230769230766,
+      "hit_at_5": 0.9615384615384616,
+      "mrr": 0.7493589743589743,
+      "paper_precision_at_5": 0.6923076923076924,
+      "paper_hit_at_5": 1.0
+    },
+    "hybrid_reranker": {
+      "precision_at_5": 0.30769230769230776,
+      "recall_at_5": 0.15384615384615388,
+      "hit_at_5": 0.8461538461538461,
+      "mrr": 0.6083333333333333,
+      "paper_precision_at_5": 0.4692307692307693,
+      "paper_hit_at_5": 0.9230769230769231
+    },
+    "semantic_reranker": {
+      "precision_at_5": 0.23076923076923087,
+      "recall_at_5": 0.11538461538461543,
+      "hit_at_5": 0.6923076923076923,
+      "mrr": 0.46794871794871795,
+      "paper_precision_at_5": 0.3692307692307693,
+      "paper_hit_at_5": 0.7692307692307693
+    }
+  },
+  "precision_delta_pct_vs_baseline": {
+    "hybrid": 21.818181818181824,
+    "hybrid_reranker": -27.27272727272724,
+    "semantic_reranker": -45.454545454545425
+  },
+  "detailed_results": [
+    {
+      "query": "How do recent papers approach learning rate scheduling?",
+      "relevant_chunk_ids": [
+        "2606.23188v1_chunk_0021",
+        "2606.22984v2_chunk_0050",
+        "2606.22984v2_chunk_0049",
+        "2606.24102v1_chunk_0048",
+        "2606.23286v1_chunk_0013",
+        "2606.23208v1_chunk_0019",
+        "2606.22068v2_chunk_0001",
+        "2606.23758v1_chunk_0019",
+        "2606.22369v1_chunk_0008",
+        "2606.23637v1_chunk_0025"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.23188v1",
+        "2606.22984v2",
+        "2606.24102v1",
+        "2606.23286v1",
+        "2606.23208v1",
+        "2606.22068v2",
+        "2606.23758v1",
+        "2606.22369v1",
+        "2606.23637v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.24133v1_chunk_0001",
+          "2606.22984v2_chunk_0050",
+          "2606.24133v1_chunk_0018",
+          "2606.23188v1_chunk_0021",
+          "2606.23567v1_chunk_0052"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.24133v1_chunk_0001",
+          "2606.22984v2_chunk_0050",
+          "2606.24133v1_chunk_0018",
+          "2606.23188v1_chunk_0021",
+          "2606.23567v1_chunk_0052"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.24025v1_chunk_0013",
+          "2606.23188v1_chunk_0021",
+          "2606.21773v1_chunk_0048",
+          "2606.24025v1_chunk_0003",
+          "2606.24025v1_chunk_0011"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.24025v1_chunk_0013",
+          "2606.23188v1_chunk_0021",
+          "2606.23932v1_chunk_0023",
+          "2606.23758v1_chunk_0019",
+          "2606.21943v1_chunk_0070"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "What are attention mechanisms in transformer models?",
+      "relevant_chunk_ids": [
+        "2606.22406v2_chunk_0004",
+        "2606.22406v2_chunk_0007",
+        "2606.22430v1_chunk_0038",
+        "2606.22430v1_chunk_0037",
+        "2606.21564v1_chunk_0006",
+        "2606.21821v1_chunk_0038",
+        "2606.23940v1_chunk_0012",
+        "2606.21344v1_chunk_0005",
+        "2606.21364v1_chunk_0008",
+        "2606.24696v1_chunk_0008"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.22406v2",
+        "2606.22430v1",
+        "2606.21564v1",
+        "2606.21821v1",
+        "2606.23940v1",
+        "2606.21344v1",
+        "2606.21364v1",
+        "2606.24696v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.22406v2_chunk_0004",
+          "2606.22430v1_chunk_0037",
+          "2606.22406v2_chunk_0007",
+          "2606.21564v1_chunk_0006",
+          "2606.21821v1_chunk_0038"
+        ],
+        "precision_at_5": 1.0,
+        "recall_at_5": 0.5,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 1.0,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.22406v2_chunk_0004",
+          "2606.22406v2_chunk_0007",
+          "2606.22430v1_chunk_0038",
+          "2606.21344v1_chunk_0005",
+          "2606.24696v1_chunk_0008"
+        ],
+        "precision_at_5": 1.0,
+        "recall_at_5": 0.5,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 1.0,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.21364v1_chunk_0008",
+          "2606.22406v2_chunk_0004",
+          "2606.22406v2_chunk_0007",
+          "2606.22406v2_chunk_0001",
+          "2606.21564v1_chunk_0006"
+        ],
+        "precision_at_5": 0.8,
+        "recall_at_5": 0.4,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 1.0,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.21364v1_chunk_0008",
+          "2606.22406v2_chunk_0004",
+          "2606.22406v2_chunk_0007",
+          "2606.22406v2_chunk_0001",
+          "2606.21564v1_chunk_0006"
+        ],
+        "precision_at_5": 0.8,
+        "recall_at_5": 0.4,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 1.0,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "What is the difference between Adam and SGD optimizers?",
+      "relevant_chunk_ids": [
+        "2606.21433v1_chunk_0002",
+        "2606.21433v1_chunk_0003",
+        "2606.21433v1_chunk_0010",
+        "2606.21433v1_chunk_0012",
+        "2606.21433v1_chunk_0011",
+        "2606.21433v1_chunk_0013",
+        "2606.21433v1_chunk_0014",
+        "2606.22326v1_chunk_0001",
+        "2606.22326v1_chunk_0003",
+        "2606.23286v1_chunk_0012"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.21433v1",
+        "2606.22326v1",
+        "2606.23286v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.23286v1_chunk_0012",
+          "2606.21433v1_chunk_0003",
+          "2606.21433v1_chunk_0002",
+          "2606.21433v1_chunk_0012",
+          "2606.22326v1_chunk_0001"
+        ],
+        "precision_at_5": 1.0,
+        "recall_at_5": 0.5,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 1.0,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.21433v1_chunk_0003",
+          "2606.23286v1_chunk_0012",
+          "2606.21433v1_chunk_0012",
+          "2606.21433v1_chunk_0002",
+          "2606.21433v1_chunk_0010"
+        ],
+        "precision_at_5": 1.0,
+        "recall_at_5": 0.5,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 1.0,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.23286v1_chunk_0012",
+          "2606.23676v1_chunk_0011",
+          "2606.23676v1_chunk_0010",
+          "2606.21433v1_chunk_0005",
+          "2606.21433v1_chunk_0002"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.22932v1_chunk_0069",
+          "2606.23286v1_chunk_0012",
+          "2606.21433v1_chunk_0076",
+          "2606.23676v1_chunk_0011",
+          "2606.23676v1_chunk_0010"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "CNN architecture for image classification",
+      "relevant_chunk_ids": [
+        "2606.22400v1_chunk_0014",
+        "2606.22400v1_chunk_0016",
+        "2606.22400v1_chunk_0015",
+        "2606.22400v1_chunk_0022",
+        "2606.22400v1_chunk_0004",
+        "2606.22400v1_chunk_0001",
+        "2606.22889v1_chunk_0016",
+        "2606.22889v1_chunk_0010",
+        "2606.22889v1_chunk_0012",
+        "2606.21289v1_chunk_0017"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.22400v1",
+        "2606.22889v1",
+        "2606.21289v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.22400v1_chunk_0014",
+          "2606.23662v1_chunk_0084",
+          "2606.22400v1_chunk_0015",
+          "2606.22400v1_chunk_0026",
+          "2606.23477v1_chunk_0041"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.22400v1_chunk_0014",
+          "2606.22400v1_chunk_0026",
+          "2606.22400v1_chunk_0016",
+          "2606.22400v1_chunk_0006",
+          "2606.23286v1_chunk_0008"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.22400v1_chunk_0014",
+          "2606.22400v1_chunk_0001",
+          "2606.23477v1_chunk_0001",
+          "2606.22400v1_chunk_0005",
+          "2606.23286v1_chunk_0008"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.22400v1_chunk_0014",
+          "2606.22400v1_chunk_0001",
+          "2606.23477v1_chunk_0001",
+          "2606.22400v1_chunk_0005",
+          "2606.23286v1_chunk_0008"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "What is reinforcement learning?",
+      "relevant_chunk_ids": [
+        "2606.21943v1_chunk_0006",
+        "2606.21943v1_chunk_0003",
+        "2606.21943v1_chunk_0031",
+        "2606.21943v1_chunk_0052",
+        "2606.21943v1_chunk_0062",
+        "2606.21943v1_chunk_0066",
+        "2606.23603v1_chunk_0006",
+        "2606.23978v1_chunk_0016",
+        "2606.22146v1_chunk_0042",
+        "2606.21604v1_chunk_0001"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.21943v1",
+        "2606.23603v1",
+        "2606.23978v1",
+        "2606.22146v1",
+        "2606.21604v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.21943v1_chunk_0006",
+          "2606.21943v1_chunk_0031",
+          "2606.21943v1_chunk_0003",
+          "2606.21943v1_chunk_0002",
+          "2606.21943v1_chunk_0005"
+        ],
+        "precision_at_5": 0.6,
+        "recall_at_5": 0.3,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 1.0,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.21943v1_chunk_0002",
+          "2606.21943v1_chunk_0062",
+          "2606.21173v1_chunk_0002",
+          "2606.21943v1_chunk_0066",
+          "2606.23603v1_chunk_0006"
+        ],
+        "precision_at_5": 0.6,
+        "recall_at_5": 0.3,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.23603v1_chunk_0006",
+          "2606.21943v1_chunk_0006",
+          "2606.21350v1_chunk_0004",
+          "2606.21943v1_chunk_0002",
+          "2606.23978v1_chunk_0017"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.23603v1_chunk_0006",
+          "2606.22350v1_chunk_0001",
+          "2606.21943v1_chunk_0006",
+          "2606.21350v1_chunk_0004",
+          "2606.23640v1_chunk_0001"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "How does batch normalization improve training?",
+      "relevant_chunk_ids": [
+        "2606.21916v1_chunk_0017",
+        "2606.23880v1_chunk_0008",
+        "2606.23758v1_chunk_0024",
+        "2606.23758v1_chunk_0053",
+        "2606.21957v1_chunk_0018",
+        "2606.23617v1_chunk_0020",
+        "2606.23617v1_chunk_0019",
+        "2606.21297v1_chunk_0012",
+        "2606.21712v1_chunk_0026",
+        "2606.21712v1_chunk_0028"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.21916v1",
+        "2606.23880v1",
+        "2606.23758v1",
+        "2606.21957v1",
+        "2606.23617v1",
+        "2606.21297v1",
+        "2606.21712v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.21916v1_chunk_0017",
+          "2606.23880v1_chunk_0008",
+          "2606.22975v1_chunk_0012",
+          "2606.23637v1_chunk_0020",
+          "2606.23758v1_chunk_0053"
+        ],
+        "precision_at_5": 0.6,
+        "recall_at_5": 0.3,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.23880v1_chunk_0008",
+          "2606.23758v1_chunk_0024",
+          "2606.23617v1_chunk_0020",
+          "2606.23617v1_chunk_0019",
+          "2606.21957v1_chunk_0018"
+        ],
+        "precision_at_5": 1.0,
+        "recall_at_5": 0.5,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 1.0,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.21916v1_chunk_0017",
+          "2606.22744v1_chunk_0014",
+          "2606.22917v1_chunk_0023",
+          "2606.22589v1_chunk_0034",
+          "2606.22776v1_chunk_0010"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.21885v1_chunk_0017",
+          "2606.21916v1_chunk_0017",
+          "2606.23601v1_chunk_0004",
+          "2606.22744v1_chunk_0014",
+          "2606.22917v1_chunk_0029"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "What are the benefits of residual connections in deep networks?",
+      "relevant_chunk_ids": [
+        "2606.23477v1_chunk_0040",
+        "2606.23477v1_chunk_0039",
+        "2606.23477v1_chunk_0029",
+        "2606.23477v1_chunk_0041",
+        "2606.23477v1_chunk_0046",
+        "2606.23477v1_chunk_0002",
+        "2606.23364v1_chunk_0029",
+        "2606.22112v1_chunk_0016",
+        "2606.22369v1_chunk_0006",
+        "2606.23856v1_chunk_0009"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.23477v1",
+        "2606.23364v1",
+        "2606.22112v1",
+        "2606.22369v1",
+        "2606.23856v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.23364v1_chunk_0008",
+          "2606.23477v1_chunk_0040",
+          "2606.21847v1_chunk_0003",
+          "2606.22167v1_chunk_0006",
+          "2606.22649v1_chunk_0004"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.23364v1_chunk_0008",
+          "2606.23477v1_chunk_0040",
+          "2606.22167v1_chunk_0012",
+          "2606.22744v1_chunk_0008",
+          "2606.23477v1_chunk_0039"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.22075v1_chunk_0005",
+          "2606.22369v1_chunk_0006",
+          "2606.23364v1_chunk_0008",
+          "2606.22744v1_chunk_0008",
+          "2606.22167v1_chunk_0002"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.21957v1_chunk_0016",
+          "2606.22075v1_chunk_0005",
+          "2606.22369v1_chunk_0006",
+          "2606.23359v1_chunk_0010",
+          "2606.21333v1_chunk_0011"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.3333333333333333,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "How do transformers handle positional information?",
+      "relevant_chunk_ids": [
+        "2606.23251v1_chunk_0017",
+        "2606.22325v1_chunk_0017",
+        "2606.22984v2_chunk_0024",
+        "2606.22984v2_chunk_0008",
+        "2606.22984v2_chunk_0023",
+        "2606.21562v1_chunk_0001",
+        "2606.21562v1_chunk_0003",
+        "2606.21611v1_chunk_0025",
+        "2606.22752v1_chunk_0013",
+        "2606.23356v1_chunk_0033"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.23251v1",
+        "2606.22325v1",
+        "2606.22984v2",
+        "2606.21562v1",
+        "2606.21611v1",
+        "2606.22752v1",
+        "2606.23356v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.23251v1_chunk_0017",
+          "2606.21562v1_chunk_0003",
+          "2606.23940v1_chunk_0012",
+          "2606.22984v2_chunk_0023",
+          "2606.22325v1_chunk_0017"
+        ],
+        "precision_at_5": 0.8,
+        "recall_at_5": 0.4,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.23251v1_chunk_0017",
+          "2606.21611v1_chunk_0025",
+          "2606.22984v2_chunk_0023",
+          "2606.21562v1_chunk_0003",
+          "2606.22325v1_chunk_0017"
+        ],
+        "precision_at_5": 1.0,
+        "recall_at_5": 0.5,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 1.0,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.23607v1_chunk_0003",
+          "2606.21562v1_chunk_0006",
+          "2606.22984v2_chunk_0008",
+          "2606.21562v1_chunk_0002",
+          "2606.22984v2_chunk_0023"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 0.3333333333333333,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.23607v1_chunk_0003",
+          "2606.21562v1_chunk_0006",
+          "2606.22984v2_chunk_0008",
+          "2606.21496v1_chunk_0009",
+          "2606.22866v1_chunk_0013"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.3333333333333333,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "What is the role of dropout in neural network regularization?",
+      "relevant_chunk_ids": [
+        "2606.23942v1_chunk_0004",
+        "2606.23942v1_chunk_0005",
+        "2606.23942v1_chunk_0011",
+        "2606.23942v1_chunk_0001",
+        "2606.23942v1_chunk_0002",
+        "2606.23942v1_chunk_0013",
+        "2606.22917v1_chunk_0004",
+        "2606.21427v1_chunk_0019",
+        "2606.21593v1_chunk_0037",
+        "2606.21795v1_chunk_0015"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.23942v1",
+        "2606.22917v1",
+        "2606.21427v1",
+        "2606.21593v1",
+        "2606.21795v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.23942v1_chunk_0004",
+          "2606.23942v1_chunk_0002",
+          "2606.23942v1_chunk_0001",
+          "2606.23942v1_chunk_0003",
+          "2606.23942v1_chunk_0005"
+        ],
+        "precision_at_5": 0.8,
+        "recall_at_5": 0.4,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 1.0,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.23942v1_chunk_0004",
+          "2606.21593v1_chunk_0009",
+          "2606.21593v1_chunk_0018",
+          "2606.21593v1_chunk_0014",
+          "2606.23601v1_chunk_0007"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.23942v1_chunk_0004",
+          "2606.23942v1_chunk_0001",
+          "2606.21593v1_chunk_0009",
+          "2606.23942v1_chunk_0002",
+          "2606.23942v1_chunk_0005"
+        ],
+        "precision_at_5": 0.8,
+        "recall_at_5": 0.4,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 1.0,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.23942v1_chunk_0004",
+          "2606.23942v1_chunk_0001",
+          "2606.21593v1_chunk_0006",
+          "2606.21593v1_chunk_0009",
+          "2606.23942v1_chunk_0013"
+        ],
+        "precision_at_5": 0.6,
+        "recall_at_5": 0.3,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 1.0,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "How does gradient clipping prevent exploding gradients?",
+      "relevant_chunk_ids": [
+        "2606.22466v1_chunk_0003",
+        "2606.22436v1_chunk_0031",
+        "2606.22436v1_chunk_0038",
+        "2606.22436v1_chunk_0035",
+        "2606.21943v1_chunk_0048",
+        "2606.22669v1_chunk_0032",
+        "2606.22669v1_chunk_0019",
+        "2606.22466v1_chunk_0002",
+        "2606.22932v1_chunk_0004",
+        "2606.23932v1_chunk_0006"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.22466v1",
+        "2606.22436v1",
+        "2606.21943v1",
+        "2606.22669v1",
+        "2606.22932v1",
+        "2606.23932v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.22436v1_chunk_0031",
+          "2606.22516v1_chunk_0016",
+          "2606.23357v1_chunk_0029",
+          "2606.22436v1_chunk_0035",
+          "2606.22433v1_chunk_0011"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.22436v1_chunk_0031",
+          "2606.23932v1_chunk_0006",
+          "2606.23357v1_chunk_0029",
+          "2606.21943v1_chunk_0048",
+          "2606.23932v1_chunk_0005"
+        ],
+        "precision_at_5": 0.6,
+        "recall_at_5": 0.3,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.23932v1_chunk_0006",
+          "2606.22436v1_chunk_0031",
+          "2606.23932v1_chunk_0015",
+          "2606.22150v1_chunk_0015",
+          "2606.22669v1_chunk_0032"
+        ],
+        "precision_at_5": 0.6,
+        "recall_at_5": 0.3,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.23932v1_chunk_0013",
+          "2606.23932v1_chunk_0006",
+          "2606.22436v1_chunk_0032",
+          "2606.22436v1_chunk_0031",
+          "2606.23932v1_chunk_0015"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 1.0,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "What are the advantages of layer normalization over batch normalization?",
+      "relevant_chunk_ids": [
+        "2606.21916v1_chunk_0017",
+        "2606.21590v1_chunk_0012",
+        "2606.21847v1_chunk_0027",
+        "2606.23880v1_chunk_0008",
+        "2606.23942v1_chunk_0008",
+        "2606.23364v1_chunk_0017",
+        "2606.23607v1_chunk_0005",
+        "2606.21868v1_chunk_0017",
+        "2606.21590v1_chunk_0011",
+        "2606.22369v1_chunk_0008"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.21916v1",
+        "2606.21590v1",
+        "2606.21847v1",
+        "2606.23880v1",
+        "2606.23942v1",
+        "2606.23364v1",
+        "2606.23607v1",
+        "2606.21868v1",
+        "2606.22369v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.21916v1_chunk_0017",
+          "2606.23880v1_chunk_0008",
+          "2606.22917v1_chunk_0023",
+          "2606.23637v1_chunk_0020",
+          "2606.21590v1_chunk_0012"
+        ],
+        "precision_at_5": 0.6,
+        "recall_at_5": 0.3,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.23880v1_chunk_0008",
+          "2606.21590v1_chunk_0012",
+          "2606.23607v1_chunk_0005",
+          "2606.21916v1_chunk_0017",
+          "2606.22917v1_chunk_0023"
+        ],
+        "precision_at_5": 0.8,
+        "recall_at_5": 0.4,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.21916v1_chunk_0017",
+          "2606.21911v1_chunk_0025",
+          "2606.22400v1_chunk_0014",
+          "2606.22400v1_chunk_0008",
+          "2606.22917v1_chunk_0029"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.21916v1_chunk_0017",
+          "2606.21911v1_chunk_0025",
+          "2606.21475v1_chunk_0010",
+          "2606.22400v1_chunk_0014",
+          "2606.22400v1_chunk_0008"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "How do autoencoders learn compressed representations?",
+      "relevant_chunk_ids": [
+        "2606.22994v1_chunk_0001",
+        "2606.22994v1_chunk_0019",
+        "2606.22994v1_chunk_0020",
+        "2606.23964v1_chunk_0004",
+        "2606.23964v1_chunk_0018",
+        "2606.23964v1_chunk_0017",
+        "2606.24046v1_chunk_0002",
+        "2606.23356v1_chunk_0023",
+        "2606.22352v1_chunk_0021",
+        "2606.22889v1_chunk_0010"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.22994v1",
+        "2606.23964v1",
+        "2606.24046v1",
+        "2606.23356v1",
+        "2606.22352v1",
+        "2606.22889v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.21562v1_chunk_0010",
+          "2606.21781v1_chunk_0012",
+          "2606.23939v1_chunk_0024",
+          "2606.23939v1_chunk_0023",
+          "2606.23957v1_chunk_0047"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.0,
+        "paper_hit_at_5": 0.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.21781v1_chunk_0004",
+          "2606.22994v1_chunk_0001",
+          "2606.21562v1_chunk_0011",
+          "2606.21562v1_chunk_0001",
+          "2606.21562v1_chunk_0010"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.21781v1_chunk_0012",
+          "2606.21593v1_chunk_0002",
+          "2606.21781v1_chunk_0004",
+          "2606.21562v1_chunk_0010",
+          "2606.22994v1_chunk_0001"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.2,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.21781v1_chunk_0003",
+          "2606.22352v1_chunk_0016",
+          "2606.21781v1_chunk_0012",
+          "2606.21593v1_chunk_0002",
+          "2606.21197v1_chunk_0003"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "What is transfer learning in computer vision?",
+      "relevant_chunk_ids": [
+        "2606.22400v1_chunk_0001",
+        "2606.22400v1_chunk_0011",
+        "2606.22400v1_chunk_0016",
+        "2606.22400v1_chunk_0022",
+        "2606.23286v1_chunk_0009",
+        "2606.21289v1_chunk_0009",
+        "2606.24601v1_chunk_0027",
+        "2606.22383v1_chunk_0024",
+        "2606.22400v1_chunk_0026",
+        "2606.23851v1_chunk_0009"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.22400v1",
+        "2606.23286v1",
+        "2606.21289v1",
+        "2606.24601v1",
+        "2606.22383v1",
+        "2606.23851v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.22400v1_chunk_0011",
+          "2606.22400v1_chunk_0006",
+          "2606.23356v1_chunk_0029",
+          "2606.23356v1_chunk_0004",
+          "2606.22516v1_chunk_0040"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.23356v1_chunk_0029",
+          "2606.21496v1_chunk_0011",
+          "2606.22400v1_chunk_0032",
+          "2606.22400v1_chunk_0001",
+          "2606.23286v1_chunk_0009"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 0.25,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.23286v1_chunk_0009",
+          "2606.22400v1_chunk_0011",
+          "2606.23356v1_chunk_0004",
+          "2606.22917v1_chunk_0040",
+          "2606.21496v1_chunk_0002"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.24459v1_chunk_0002",
+          "2606.23286v1_chunk_0009",
+          "2606.22400v1_chunk_0011",
+          "2606.23356v1_chunk_0004",
+          "2606.22917v1_chunk_0040"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "How does label smoothing improve model calibration?",
+      "relevant_chunk_ids": [
+        "2606.21513v1_chunk_0028",
+        "2606.21422v1_chunk_0025",
+        "2606.21513v1_chunk_0031",
+        "2606.22917v1_chunk_0029",
+        "2606.23213v1_chunk_0011",
+        "2606.22200v1_chunk_0012",
+        "2606.22200v1_chunk_0013",
+        "2606.23155v1_chunk_0022",
+        "2606.22775v2_chunk_0019",
+        "2606.22991v1_chunk_0003"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.21513v1",
+        "2606.21422v1",
+        "2606.22917v1",
+        "2606.23213v1",
+        "2606.22200v1",
+        "2606.23155v1",
+        "2606.22775v2",
+        "2606.22991v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.22200v1_chunk_0029",
+          "2606.22200v1_chunk_0012",
+          "2606.22200v1_chunk_0023",
+          "2606.22200v1_chunk_0018",
+          "2606.22200v1_chunk_0032"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 1.0,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.22991v1_chunk_0003",
+          "2606.22606v1_chunk_0040",
+          "2606.22200v1_chunk_0029",
+          "2606.22200v1_chunk_0012",
+          "2606.22200v1_chunk_0023"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.23827v1_chunk_0020",
+          "2606.21916v1_chunk_0003",
+          "2606.22775v2_chunk_0019",
+          "2606.22200v1_chunk_0029",
+          "2606.22336v1_chunk_0025"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.3333333333333333,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.23827v1_chunk_0020",
+          "2606.21916v1_chunk_0003",
+          "2606.22084v1_chunk_0028",
+          "2606.22307v1_chunk_0011",
+          "2606.21916v1_chunk_0014"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.0,
+        "paper_hit_at_5": 0.0
+      }
+    },
+    {
+      "query": "What are the key components of a GAN architecture?",
+      "relevant_chunk_ids": [
+        "2606.21289v1_chunk_0007",
+        "2606.22700v1_chunk_0010",
+        "2606.22700v1_chunk_0018",
+        "2606.22700v1_chunk_0021",
+        "2606.21289v1_chunk_0028",
+        "2606.23856v1_chunk_0008",
+        "2606.22304v1_chunk_0002",
+        "2606.24087v1_chunk_0008",
+        "2606.21513v1_chunk_0038",
+        "2606.21289v1_chunk_0021"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.21289v1",
+        "2606.22700v1",
+        "2606.23856v1",
+        "2606.22304v1",
+        "2606.24087v1",
+        "2606.21513v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.22304v1_chunk_0002",
+          "2606.21289v1_chunk_0028",
+          "2606.21289v1_chunk_0021",
+          "2606.22700v1_chunk_0018",
+          "2606.22601v1_chunk_0020"
+        ],
+        "precision_at_5": 0.8,
+        "recall_at_5": 0.4,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.22700v1_chunk_0018",
+          "2606.21289v1_chunk_0021",
+          "2606.22304v1_chunk_0002",
+          "2606.21289v1_chunk_0028",
+          "2606.22601v1_chunk_0020"
+        ],
+        "precision_at_5": 0.8,
+        "recall_at_5": 0.4,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.21289v1_chunk_0007",
+          "2606.22984v2_chunk_0008",
+          "2606.23548v1_chunk_0008",
+          "2606.23548v1_chunk_0014",
+          "2606.22866v1_chunk_0014"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.22700v1_chunk_0009",
+          "2606.21289v1_chunk_0007",
+          "2606.21806v1_chunk_0003",
+          "2606.22984v2_chunk_0008",
+          "2606.21395v1_chunk_0017"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "How does knowledge distillation transfer knowledge between models?",
+      "relevant_chunk_ids": [
+        "2606.21994v1_chunk_0001",
+        "2606.21994v1_chunk_0019",
+        "2606.21994v1_chunk_0020",
+        "2606.24143v1_chunk_0026",
+        "2606.24143v1_chunk_0027",
+        "2606.23356v1_chunk_0010",
+        "2606.24601v1_chunk_0004",
+        "2606.22600v2_chunk_0018",
+        "2606.22600v2_chunk_0019",
+        "2606.23276v1_chunk_0004"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.21994v1",
+        "2606.24143v1",
+        "2606.23356v1",
+        "2606.24601v1",
+        "2606.22600v2",
+        "2606.23276v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.22019v1_chunk_0063",
+          "2606.24601v1_chunk_0004",
+          "2606.23898v1_chunk_0004",
+          "2606.23898v1_chunk_0029",
+          "2606.21994v1_chunk_0020"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.22019v1_chunk_0063",
+          "2606.23898v1_chunk_0004",
+          "2606.24601v1_chunk_0004",
+          "2606.23356v1_chunk_0004",
+          "2606.23898v1_chunk_0029"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.3333333333333333,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.23898v1_chunk_0004",
+          "2606.23898v1_chunk_0001",
+          "2606.23898v1_chunk_0002",
+          "2606.24459v1_chunk_0002",
+          "2606.23356v1_chunk_0004"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.21884v1_chunk_0002",
+          "2606.23898v1_chunk_0004",
+          "2606.23898v1_chunk_0001",
+          "2606.23898v1_chunk_0002",
+          "2606.24459v1_chunk_0002"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.0,
+        "paper_hit_at_5": 0.0
+      }
+    },
+    {
+      "query": "What is the difference between supervised and self-supervised learning?",
+      "relevant_chunk_ids": [
+        "2606.22177v1_chunk_0001",
+        "2606.22177v1_chunk_0006",
+        "2606.22177v1_chunk_0039",
+        "2606.21590v1_chunk_0003",
+        "2606.21590v1_chunk_0005",
+        "2606.21590v1_chunk_0015",
+        "2606.21590v1_chunk_0001",
+        "2606.21590v1_chunk_0010",
+        "2606.21260v1_chunk_0081",
+        "2606.24263v1_chunk_0018"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.22177v1",
+        "2606.21590v1",
+        "2606.21260v1",
+        "2606.24263v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.21590v1_chunk_0007",
+          "2606.21590v1_chunk_0003",
+          "2606.23611v1_chunk_0011",
+          "2606.21590v1_chunk_0005",
+          "2606.23611v1_chunk_0004"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.24263v1_chunk_0013",
+          "2606.21590v1_chunk_0005",
+          "2606.23038v1_chunk_0020",
+          "2606.24263v1_chunk_0016",
+          "2606.21957v1_chunk_0001"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.21957v1_chunk_0001",
+          "2606.21590v1_chunk_0003",
+          "2606.24263v1_chunk_0013",
+          "2606.22177v1_chunk_0001",
+          "2606.21590v1_chunk_0005"
+        ],
+        "precision_at_5": 0.6,
+        "recall_at_5": 0.3,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.21957v1_chunk_0001",
+          "2606.21590v1_chunk_0003",
+          "2606.24263v1_chunk_0013",
+          "2606.22177v1_chunk_0001",
+          "2606.21957v1_chunk_0002"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "How do diffusion models generate high-quality images?",
+      "relevant_chunk_ids": [
+        "2606.23627v1_chunk_0003",
+        "2606.23627v1_chunk_0019",
+        "2606.23627v1_chunk_0020",
+        "2606.23627v1_chunk_0022",
+        "2606.22314v2_chunk_0008",
+        "2606.22314v2_chunk_0012",
+        "2606.22314v2_chunk_0020",
+        "2606.22521v1_chunk_0001",
+        "2606.22239v1_chunk_0011",
+        "2606.22837v1_chunk_0001"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.23627v1",
+        "2606.22314v2",
+        "2606.22521v1",
+        "2606.22239v1",
+        "2606.22837v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.23898v1_chunk_0026",
+          "2606.23898v1_chunk_0005",
+          "2606.23872v1_chunk_0029",
+          "2606.22314v2_chunk_0012",
+          "2606.23626v1_chunk_0019"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.25,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.23627v1_chunk_0003",
+          "2606.22958v1_chunk_0024",
+          "2606.23627v1_chunk_0020",
+          "2606.23086v1_chunk_0001",
+          "2606.22314v2_chunk_0020"
+        ],
+        "precision_at_5": 0.6,
+        "recall_at_5": 0.3,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.23086v1_chunk_0001",
+          "2606.23872v1_chunk_0029",
+          "2606.23898v1_chunk_0005",
+          "2606.22521v1_chunk_0001",
+          "2606.24025v1_chunk_0001"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.25,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.24000v1_chunk_0013",
+          "2606.23872v1_chunk_0005",
+          "2606.23086v1_chunk_0001",
+          "2606.23872v1_chunk_0029",
+          "2606.23898v1_chunk_0005"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.0,
+        "paper_hit_at_5": 0.0
+      }
+    },
+    {
+      "query": "What are the challenges of training very deep neural networks?",
+      "relevant_chunk_ids": [
+        "2606.23477v1_chunk_0002",
+        "2606.23477v1_chunk_0005",
+        "2606.23477v1_chunk_0029",
+        "2606.23477v1_chunk_0032",
+        "2606.23477v1_chunk_0034",
+        "2606.23477v1_chunk_0035",
+        "2606.23477v1_chunk_0036",
+        "2606.23477v1_chunk_0038",
+        "2606.23364v1_chunk_0029",
+        "2606.23742v1_chunk_0038"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.23477v1",
+        "2606.23364v1",
+        "2606.23742v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.23477v1_chunk_0050",
+          "2606.23676v1_chunk_0012",
+          "2606.21488v1_chunk_0001",
+          "2606.22768v1_chunk_0032",
+          "2606.23477v1_chunk_0048"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.23611v1_chunk_0024",
+          "2606.21497v1_chunk_0001",
+          "2606.23477v1_chunk_0050",
+          "2606.23676v1_chunk_0012",
+          "2606.21488v1_chunk_0001"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.21497v1_chunk_0001",
+          "2606.23742v1_chunk_0037",
+          "2606.23611v1_chunk_0024",
+          "2606.21488v1_chunk_0001",
+          "2606.23546v1_chunk_0041"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.21497v1_chunk_0001",
+          "2606.23742v1_chunk_0037",
+          "2606.21884v1_chunk_0046",
+          "2606.23364v1_chunk_0004",
+          "2606.22662v1_chunk_0010"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "How does contrastive learning learn representations without labels?",
+      "relevant_chunk_ids": [
+        "2606.21838v1_chunk_0001",
+        "2606.21838v1_chunk_0004",
+        "2606.21838v1_chunk_0011",
+        "2606.21838v1_chunk_0010",
+        "2606.21838v1_chunk_0002",
+        "2606.23570v1_chunk_0001",
+        "2606.23570v1_chunk_0003",
+        "2606.23570v1_chunk_0010",
+        "2606.23570v1_chunk_0014",
+        "2606.21957v1_chunk_0004"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.21838v1",
+        "2606.23570v1",
+        "2606.21957v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.21590v1_chunk_0005",
+          "2606.21957v1_chunk_0004",
+          "2606.21838v1_chunk_0004",
+          "2606.22331v1_chunk_0004",
+          "2606.21957v1_chunk_0005"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.21957v1_chunk_0004",
+          "2606.21957v1_chunk_0005",
+          "2606.21838v1_chunk_0011",
+          "2606.21590v1_chunk_0007",
+          "2606.23570v1_chunk_0003"
+        ],
+        "precision_at_5": 0.6,
+        "recall_at_5": 0.3,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.21427v1_chunk_0004",
+          "2606.21957v1_chunk_0004",
+          "2606.21957v1_chunk_0001",
+          "2606.21957v1_chunk_0005",
+          "2606.21590v1_chunk_0005"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.21427v1_chunk_0004",
+          "2606.21957v1_chunk_0004",
+          "2606.21604v1_chunk_0009",
+          "2606.21957v1_chunk_0001",
+          "2606.22567v1_chunk_0004"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "What is the purpose of weight decay in optimization?",
+      "relevant_chunk_ids": [
+        "2606.23357v1_chunk_0005",
+        "2606.23637v1_chunk_0008",
+        "2606.23662v1_chunk_0081",
+        "2606.23662v1_chunk_0079",
+        "2606.23637v1_chunk_0012",
+        "2606.21593v1_chunk_0033",
+        "2606.21496v1_chunk_0025",
+        "2606.22874v1_chunk_0031",
+        "2606.21690v2_chunk_0029",
+        "2606.23942v1_chunk_0004"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.23357v1",
+        "2606.23637v1",
+        "2606.23662v1",
+        "2606.21593v1",
+        "2606.21496v1",
+        "2606.22874v1",
+        "2606.21690v2",
+        "2606.23942v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.23637v1_chunk_0005",
+          "2606.21528v1_chunk_0007",
+          "2606.23359v1_chunk_0012",
+          "2606.23637v1_chunk_0007",
+          "2606.23357v1_chunk_0026"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.23357v1_chunk_0026",
+          "2606.23637v1_chunk_0005",
+          "2606.23637v1_chunk_0007",
+          "2606.23637v1_chunk_0017",
+          "2606.23662v1_chunk_0081"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.2,
+        "paper_precision_at_5": 1.0,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.23359v1_chunk_0012",
+          "2606.22146v1_chunk_0010",
+          "2606.23637v1_chunk_0007",
+          "2606.22429v1_chunk_0011",
+          "2606.23637v1_chunk_0008"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.2,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.22984v2_chunk_0029",
+          "2606.22630v1_chunk_0033",
+          "2606.23359v1_chunk_0012",
+          "2606.22146v1_chunk_0010",
+          "2606.24007v1_chunk_0030"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.0,
+        "paper_hit_at_5": 0.0
+      }
+    },
+    {
+      "query": "How do normalization layers affect gradient flow?",
+      "relevant_chunk_ids": [
+        "2606.23364v1_chunk_0018",
+        "2606.22752v1_chunk_0014",
+        "2606.23942v1_chunk_0004",
+        "2606.21590v1_chunk_0021",
+        "2606.22874v1_chunk_0031",
+        "2606.23637v1_chunk_0007",
+        "2606.24011v1_chunk_0032",
+        "2606.22084v1_chunk_0040",
+        "2606.24790v1_chunk_0007",
+        "2606.24790v1_chunk_0018"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.23364v1",
+        "2606.22752v1",
+        "2606.23942v1",
+        "2606.21590v1",
+        "2606.22874v1",
+        "2606.23637v1",
+        "2606.24011v1",
+        "2606.22084v1",
+        "2606.24790v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.23637v1_chunk_0007",
+          "2606.22938v1_chunk_0034",
+          "2606.21415v1_chunk_0025",
+          "2606.21564v1_chunk_0008",
+          "2606.21828v1_chunk_0023"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.21590v1_chunk_0021",
+          "2606.23942v1_chunk_0004",
+          "2606.23607v1_chunk_0005",
+          "2606.24011v1_chunk_0032",
+          "2606.23637v1_chunk_0007"
+        ],
+        "precision_at_5": 0.8,
+        "recall_at_5": 0.4,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.21415v1_chunk_0025",
+          "2606.23942v1_chunk_0004",
+          "2606.23637v1_chunk_0005",
+          "2606.22752v1_chunk_0014",
+          "2606.22744v1_chunk_0014"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.23251v1_chunk_0018",
+          "2606.21828v1_chunk_0013",
+          "2606.21415v1_chunk_0025",
+          "2606.23359v1_chunk_0018",
+          "2606.23198v1_chunk_0028"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.0,
+        "paper_hit_at_5": 0.0
+      }
+    },
+    {
+      "query": "What are the benefits of mixed precision training?",
+      "relevant_chunk_ids": [
+        "2606.21498v1_chunk_0011",
+        "2606.23546v1_chunk_0004",
+        "2606.22874v1_chunk_0031",
+        "2606.22984v2_chunk_0049",
+        "2606.24102v1_chunk_0048",
+        "2606.23155v1_chunk_0066",
+        "2606.21718v1_chunk_0006",
+        "2606.23637v1_chunk_0025",
+        "2606.23370v1_chunk_0018",
+        "2606.22600v2_chunk_0018"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.21498v1",
+        "2606.23546v1",
+        "2606.22874v1",
+        "2606.22984v2",
+        "2606.24102v1",
+        "2606.23155v1",
+        "2606.21718v1",
+        "2606.23637v1",
+        "2606.23370v1",
+        "2606.22600v2"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.23104v1_chunk_0004",
+          "2606.22551v1_chunk_0020",
+          "2606.24133v1_chunk_0017",
+          "2606.22600v2_chunk_0018",
+          "2606.21795v1_chunk_0023"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.25,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.23611v1_chunk_0018",
+          "2606.23104v1_chunk_0004",
+          "2606.22551v1_chunk_0020",
+          "2606.24133v1_chunk_0017",
+          "2606.22600v2_chunk_0018"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 0.2,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.22551v1_chunk_0020",
+          "2606.23991v1_chunk_0034",
+          "2606.22606v1_chunk_0026",
+          "2606.24133v1_chunk_0017",
+          "2606.22062v1_chunk_0010"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.0,
+        "paper_hit_at_5": 0.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.21943v1_chunk_0032",
+          "2606.21975v1_chunk_0017",
+          "2606.24133v1_chunk_0016",
+          "2606.22551v1_chunk_0020",
+          "2606.23991v1_chunk_0034"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.0,
+        "paper_hit_at_5": 0.0
+      }
+    },
+    {
+      "query": "How does early stopping prevent overfitting?",
+      "relevant_chunk_ids": [
+        "2606.22377v1_chunk_0022",
+        "2606.22377v1_chunk_0021",
+        "2606.23601v1_chunk_0005",
+        "2606.23601v1_chunk_0008",
+        "2606.22053v1_chunk_0065",
+        "2606.22389v1_chunk_0013",
+        "2606.21917v1_chunk_0003",
+        "2606.22167v1_chunk_0009",
+        "2606.21230v1_chunk_0004",
+        "2606.21364v1_chunk_0011"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.22377v1",
+        "2606.23601v1",
+        "2606.22053v1",
+        "2606.22389v1",
+        "2606.21917v1",
+        "2606.22167v1",
+        "2606.21230v1",
+        "2606.21364v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.23601v1_chunk_0008",
+          "2606.22053v1_chunk_0065",
+          "2606.22053v1_chunk_0035",
+          "2606.23611v1_chunk_0009",
+          "2606.23601v1_chunk_0005"
+        ],
+        "precision_at_5": 0.6,
+        "recall_at_5": 0.3,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.23601v1_chunk_0008",
+          "2606.21889v1_chunk_0021",
+          "2606.21889v1_chunk_0023",
+          "2606.22053v1_chunk_0065",
+          "2606.22053v1_chunk_0035"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.23601v1_chunk_0008",
+          "2606.22220v2_chunk_0019",
+          "2606.22389v1_chunk_0035",
+          "2606.22053v1_chunk_0033",
+          "2606.23601v1_chunk_0005"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.23601v1_chunk_0008",
+          "2606.21364v1_chunk_0010",
+          "2606.22220v2_chunk_0019",
+          "2606.23601v1_chunk_0004",
+          "2606.22389v1_chunk_0035"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "What is the role of the learning rate in optimization?",
+      "relevant_chunk_ids": [
+        "2606.23364v1_chunk_0028",
+        "2606.21683v1_chunk_0006",
+        "2606.23286v1_chunk_0013",
+        "2606.23208v1_chunk_0019",
+        "2606.22053v1_chunk_0057",
+        "2606.23758v1_chunk_0019",
+        "2606.21593v1_chunk_0033",
+        "2606.23188v1_chunk_0021",
+        "2606.22326v1_chunk_0010",
+        "2606.22639v1_chunk_0036"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.23364v1",
+        "2606.21683v1",
+        "2606.23286v1",
+        "2606.23208v1",
+        "2606.22053v1",
+        "2606.23758v1",
+        "2606.21593v1",
+        "2606.23188v1",
+        "2606.22326v1",
+        "2606.22639v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.23188v1_chunk_0021",
+          "2606.22984v2_chunk_0050",
+          "2606.23286v1_chunk_0012",
+          "2606.23364v1_chunk_0023",
+          "2606.21773v1_chunk_0007"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.23286v1_chunk_0013",
+          "2606.23364v1_chunk_0028",
+          "2606.23188v1_chunk_0021",
+          "2606.22984v2_chunk_0050",
+          "2606.23286v1_chunk_0012"
+        ],
+        "precision_at_5": 0.6,
+        "recall_at_5": 0.3,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.23758v1_chunk_0019",
+          "2606.24660v1_chunk_0024",
+          "2606.23188v1_chunk_0021",
+          "2606.23286v1_chunk_0012",
+          "2606.21773v1_chunk_0012"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.24007v1_chunk_0030",
+          "2606.23758v1_chunk_0019",
+          "2606.24660v1_chunk_0024",
+          "2606.21773v1_chunk_0009",
+          "2606.23188v1_chunk_0021"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 0.5,
+        "paper_precision_at_5": 0.4,
+        "paper_hit_at_5": 1.0
+      }
+    },
+    {
+      "query": "How do ensemble methods improve predictive performance?",
+      "relevant_chunk_ids": [
+        "2606.21929v1_chunk_0001",
+        "2606.21929v1_chunk_0002",
+        "2606.21929v1_chunk_0019",
+        "2606.24047v1_chunk_0001",
+        "2606.24047v1_chunk_0005",
+        "2606.24047v1_chunk_0010",
+        "2606.22026v1_chunk_0062",
+        "2606.22026v1_chunk_0102",
+        "2606.24062v1_chunk_0014",
+        "2606.24263v1_chunk_0015"
+      ],
+      "relevant_arxiv_ids": [
+        "2606.21929v1",
+        "2606.24047v1",
+        "2606.22026v1",
+        "2606.24062v1",
+        "2606.24263v1"
+      ],
+      "baseline": {
+        "chunk_ids": [
+          "2606.22075v1_chunk_0014",
+          "2606.22026v1_chunk_0079",
+          "2606.22026v1_chunk_0043",
+          "2606.22026v1_chunk_0062",
+          "2606.22026v1_chunk_0102"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 0.25,
+        "paper_precision_at_5": 0.8,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid": {
+        "chunk_ids": [
+          "2606.22026v1_chunk_0102",
+          "2606.22026v1_chunk_0062",
+          "2606.22567v1_chunk_0016",
+          "2606.22026v1_chunk_0047",
+          "2606.22765v1_chunk_0010"
+        ],
+        "precision_at_5": 0.4,
+        "recall_at_5": 0.2,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.6,
+        "paper_hit_at_5": 1.0
+      },
+      "hybrid_reranker": {
+        "chunk_ids": [
+          "2606.24020v1_chunk_0082",
+          "2606.22950v1_chunk_0020",
+          "2606.22765v1_chunk_0010",
+          "2606.22567v1_chunk_0016",
+          "2606.22075v1_chunk_0014"
+        ],
+        "precision_at_5": 0.0,
+        "recall_at_5": 0.0,
+        "hit_at_5": 0.0,
+        "mrr": 0.0,
+        "paper_precision_at_5": 0.0,
+        "paper_hit_at_5": 0.0
+      },
+      "semantic_reranker": {
+        "chunk_ids": [
+          "2606.24062v1_chunk_0014",
+          "2606.21256v1_chunk_0054",
+          "2606.24020v1_chunk_0018",
+          "2606.24020v1_chunk_0082",
+          "2606.22950v1_chunk_0020"
+        ],
+        "precision_at_5": 0.2,
+        "recall_at_5": 0.1,
+        "hit_at_5": 1.0,
+        "mrr": 1.0,
+        "paper_precision_at_5": 0.2,
+        "paper_hit_at_5": 1.0
+      }
+    }
+  ]
+}
