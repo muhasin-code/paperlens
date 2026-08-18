@@ -4,6 +4,7 @@ Provides BM25-based keyword search over the chunk corpus using rank_bm25.
 Persists index to data/bm25_index.pkl for fast loading.
 """
 
+import re
 import time
 from pathlib import Path
 
@@ -29,11 +30,253 @@ class BM25Result(BaseModel):
     text: str
 
 
+# English stopwords for academic text
+STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "by",
+    "for",
+    "from",
+    "has",
+    "he",
+    "in",
+    "is",
+    "it",
+    "its",
+    "of",
+    "on",
+    "that",
+    "the",
+    "to",
+    "was",
+    "were",
+    "will",
+    "with",
+    "this",
+    "these",
+    "those",
+    "or",
+    "but",
+    "not",
+    "have",
+    "had",
+    "do",
+    "does",
+    "did",
+    "can",
+    "could",
+    "should",
+    "would",
+    "may",
+    "might",
+    "must",
+    "shall",
+    "we",
+    "our",
+    "us",
+    "you",
+    "your",
+    "their",
+    "them",
+    "they",
+    "i",
+    "me",
+    "my",
+    "mine",
+    "his",
+    "her",
+    "hers",
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "first",
+    "second",
+    "also",
+    "such",
+    "than",
+    "then",
+    "when",
+    "where",
+    "why",
+    "how",
+    "all",
+    "any",
+    "each",
+    "every",
+    "both",
+    "either",
+    "neither",
+    "many",
+    "much",
+    "more",
+    "most",
+    "some",
+    "few",
+    "several",
+    "other",
+    "another",
+    "same",
+    "different",
+    "new",
+    "old",
+    "no",
+    "nor",
+    "so",
+    "too",
+    "very",
+    "just",
+    "only",
+    "even",
+    "still",
+    "yet",
+    "already",
+    "again",
+    "once",
+    "ever",
+    "never",
+    "here",
+    "there",
+    "hereby",
+    "thereby",
+    "whereby",
+    "above",
+    "below",
+    "under",
+    "over",
+    "between",
+    "among",
+    "through",
+    "during",
+    "before",
+    "after",
+    "since",
+    "until",
+    "while",
+    "although",
+    "though",
+    "if",
+    "unless",
+    "whether",
+    "because",
+    "thus",
+    "hence",
+    "therefore",
+    "however",
+    "moreover",
+    "furthermore",
+    "nevertheless",
+    "nonetheless",
+    "accordingly",
+    "consequently",
+    "meanwhile",
+    "besides",
+    "otherwise",
+    "indeed",
+    "in fact",
+    "of course",
+    "for example",
+    "for instance",
+    "etc",
+    "e.g",
+    "i.e",
+    "et al",
+    "vs",
+    "via",
+    "w.r.t",
+    "wrt",
+    "fig",
+    "figure",
+    "table",
+    "eq",
+    "equation",
+    "sec",
+    "section",
+    "appendix",
+    "chapter",
+    "ref",
+    "reference",
+    "references",
+    "cite",
+    "cited",
+    "cites",
+    "citation",
+    "citations",
+}
+
+
+def simple_stem(word: str) -> str:
+    """Simple English stemmer for academic terms."""
+    # Common academic suffixes
+    suffixes = [
+        ("ization", "ize"),
+        ("ation", "ate"),
+        ("ator", "ate"),
+        ("ative", "ate"),
+        ("ing", ""),
+        ("ed", ""),
+        ("er", ""),
+        ("est", ""),
+        ("ly", ""),
+        ("tion", "te"),
+        ("sion", "se"),
+        ("ness", ""),
+        ("ment", ""),
+        ("able", ""),
+        ("ible", ""),
+        ("al", ""),
+        ("ic", ""),
+        ("ous", ""),
+        ("ive", ""),
+        ("ent", ""),
+        ("ant", ""),
+        ("ism", ""),
+        ("ist", ""),
+        ("ity", ""),
+        ("cy", ""),
+        ("ry", ""),
+        ("ty", ""),
+        ("ence", ""),
+        ("ance", ""),
+        ("dom", ""),
+        ("hood", ""),
+        ("ship", ""),
+        ("ful", ""),
+        ("less", ""),
+        ("ness", ""),
+    ]
+
+    word_lower = word.lower()
+    for suffix, replacement in suffixes:
+        if word_lower.endswith(suffix) and len(word_lower) > len(suffix) + 2:
+            return word_lower[: -len(suffix)] + replacement
+    return word_lower
+
+
+def clean_text(text: str) -> str:
+    """Clean LaTeX artifacts and normalize text for tokenization."""
+    # Remove LaTeX commands
+    text = re.sub(r"\\[a-zA-Z]+", " ", text)
+    # Remove math mode artifacts
+    text = re.sub(r"[\\$^{}_]", " ", text)
+    # Remove standalone numbers and symbols
+    text = re.sub(r"\b\d+\b", " ", text)
+    # Normalize whitespace
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
 class BM25Retriever:
     """BM25 keyword retriever over chunk corpus.
 
     Uses rank_bm25.BM25Okapi with default parameters (k1=1.5, b=0.75).
-    Tokenization is simple whitespace + lowercase for speed on CPU-only systems.
+    Tokenization includes cleaning, stopword removal, and stemming.
     """
 
     INDEX_PATH = Path("data/bm25_index.pkl")
@@ -64,15 +307,19 @@ class BM25Retriever:
         self._index_path = index_path or self.INDEX_PATH
 
     def _tokenize(self, text: str) -> list[str]:
-        """Simple whitespace + lowercase tokenization.
+        """Clean, tokenize, remove stopwords, and stem text.
 
         Args:
             text: Text to tokenize
 
         Returns:
-            List of lowercase tokens
+            List of processed tokens
         """
-        return text.lower().split()
+        text = clean_text(text)
+        tokens = text.lower().split()
+        # Remove stopwords and very short tokens, apply stemming
+        processed = [simple_stem(tok) for tok in tokens if tok not in STOPWORDS and len(tok) > 2]
+        return processed
 
     def build(self) -> dict:
         """Build BM25 index from chunks.

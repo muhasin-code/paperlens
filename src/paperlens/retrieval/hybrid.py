@@ -33,6 +33,9 @@ class HybridRetriever:
         self._embedder = embedder
         self._rrf_k = settings.rrf_k
         self._candidate_pool = settings.hybrid_candidate_pool
+        # Weighted RRF: semantic gets 2x weight vs BM25
+        self._semantic_weight = 2.0
+        self._bm25_weight = 1.0
 
     def _get_semantic_retriever(self) -> SemanticRetriever:
         """Lazily create SemanticRetriever if not provided."""
@@ -55,7 +58,7 @@ class HybridRetriever:
         """Execute hybrid retrieval with RRF fusion.
 
         Runs both semantic and BM25 retrieval, then merges results using
-        Reciprocal Rank Fusion.
+        weighted Reciprocal Rank Fusion (semantic: 2.0, BM25: 1.0).
 
         Args:
             query: Natural language query string
@@ -76,16 +79,16 @@ class HybridRetriever:
         rrf_scores: dict[str, float] = defaultdict(float)
         chunk_map: dict[str, Chunk] = {}
 
-        # For semantic results (RetrievalResult has .chunk)
+        # For semantic results (RetrievalResult has .chunk) - weighted 2.0
         for rank, result in enumerate(semantic_results, start=1):
             chunk_id = result.chunk.chunk_id
-            rrf_scores[chunk_id] += 1.0 / (self._rrf_k + rank)
+            rrf_scores[chunk_id] += self._semantic_weight / (self._rrf_k + rank)
             chunk_map[chunk_id] = result.chunk
 
-        # For BM25 results (BM25Result has fields directly, no .chunk)
+        # For BM25 results (BM25Result has fields directly, no .chunk) - weighted 1.0
         for rank, result in enumerate(bm25_results, start=1):
             chunk_id = result.chunk_id  # Direct access
-            rrf_scores[chunk_id] += 1.0 / (self._rrf_k + rank)
+            rrf_scores[chunk_id] += self._bm25_weight / (self._rrf_k + rank)
             if chunk_id not in chunk_map:
                 # Reconstruct Chunk from BM25Result fields
                 chunk_map[chunk_id] = Chunk(
