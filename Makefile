@@ -104,6 +104,14 @@ prompt-verify:
 	python scripts/verify_prompt.py
 
 
+# ─── Retrieval Quality Benchmark (Phase 2.5) ─────────────────────────────────────────────
+
+eval-retrieval:
+	@echo "-> Running retrieval quality benchmark..."
+	@echo "   This runs in HEADLESS MODE (no Ollama/LLM required)."
+	python scripts/evaluate_retrieval.py
+
+
 # ─── Development Server ───────────────────────────────────────────────────────────
 
 run-backend:
@@ -149,6 +157,7 @@ help:
 	@echo " make hybrid-verify    Smoke-test: hybrid retrieval with RRF"
 	@echo " make reranker-verify    Smoke-test: cross-encoder reranking"
 	@echo " make prompt-verify      Smoke-test: prompt loader"
+	@echo " make eval-retrieval      Run full retrieval benchmark (baseline vs hybrid vs hybrid+reranker)"
 	@echo " make run-backend		Start FastAPI dev server"
 	@echo " make run-frontend		Start React dev server"
 	@echo " make benchmark      		Run Ollama inference benchmarks (tokens/sec, TTFT, RAM)"

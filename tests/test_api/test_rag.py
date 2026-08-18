@@ -58,19 +58,6 @@ def mock_ollama_client():
 
 
 @pytest.fixture
-def mock_reranker():
-    """Mock CrossEncoderReranker to return results unchanged."""
-    with patch("src.paperlens.api.rag.CrossEncoderReranker") as mock_reranker_class:
-        mock_reranker = MagicMock()
-        mock_reranker_class.return_value = mock_reranker
-        # Return input results unchanged
-        mock_reranker.rerank.side_effect = lambda query, results, top_k=None: (
-            results[:top_k] if top_k else results
-        )
-        yield mock_reranker
-
-
-@pytest.fixture
 def mock_vector_store():
     """Mock VectorStore to avoid real ChromaDB connection in RAGService.__init__."""
     with patch("src.paperlens.api.rag.VectorStore") as mock_vs_class:
@@ -83,7 +70,7 @@ def mock_vector_store():
 class TestRAGService:
     @pytest.mark.asyncio
     async def test_query_returns_cited_answer(
-        self, settings, mock_retriever, mock_ollama_client, mock_reranker, mock_vector_store
+        self, settings, mock_retriever, mock_ollama_client, mock_vector_store
     ):
         service = RAGService(settings, retriever=mock_retriever)
         request = QueryRequest(query="What learning rate schedule is proposed?")
@@ -109,7 +96,7 @@ class TestRAGService:
 
     @pytest.mark.asyncio
     async def test_query_empty_retrieval_returns_fallback(
-        self, settings, mock_retriever, mock_ollama_client, mock_reranker, mock_vector_store
+        self, settings, mock_retriever, mock_ollama_client, mock_vector_store
     ):
         mock_retriever.search.return_value = []
         service = RAGService(settings, retriever=mock_retriever)
@@ -122,7 +109,7 @@ class TestRAGService:
 
     @pytest.mark.asyncio
     async def test_fallback_model_used_on_primary_failure(
-        self, settings, mock_retriever, mock_ollama_client, mock_reranker, mock_vector_store
+        self, settings, mock_retriever, mock_ollama_client, mock_vector_store
     ):
         # First call fails, second succeeds
         mock_ollama_client.generate.side_effect = [
@@ -141,7 +128,7 @@ class TestRAGService:
 
     @pytest.mark.asyncio
     async def test_health_check_reports_chroma_and_ollama(
-        self, settings, mock_retriever, mock_ollama_client, mock_reranker, mock_vector_store
+        self, settings, mock_retriever, mock_ollama_client, mock_vector_store
     ):
         service = RAGService(settings, retriever=mock_retriever)
         health = await service.health_check()
@@ -154,7 +141,7 @@ class TestRAGService:
 class TestRefusalAndRetry:
     @pytest.mark.asyncio
     async def test_response_with_valid_citations_succeeds(
-        self, settings, mock_retriever, mock_ollama_client, mock_reranker, mock_vector_store
+        self, settings, mock_retriever, mock_ollama_client, mock_vector_store
     ):
         """Test that response with citation markers passes validation."""
         service = RAGService(settings, retriever=mock_retriever)
@@ -169,7 +156,7 @@ class TestRefusalAndRetry:
 
     @pytest.mark.asyncio
     async def test_empty_response_triggers_retry_then_fallback(
-        self, settings, mock_retriever, mock_reranker, mock_vector_store
+        self, settings, mock_retriever, mock_vector_store
     ):
         """Test that empty LLM response triggers retry, then fallback model."""
         with patch("src.paperlens.api.rag.ollama.AsyncClient") as mock_client_class:
@@ -193,7 +180,7 @@ class TestRefusalAndRetry:
 
     @pytest.mark.asyncio
     async def test_missing_citation_triggers_retry_then_fallback(
-        self, settings, mock_retriever, mock_reranker, mock_vector_store
+        self, settings, mock_retriever, mock_vector_store
     ):
         """Test that response without citation markers triggers retry, then fallback."""
         with patch("src.paperlens.api.rag.ollama.AsyncClient") as mock_client_class:
@@ -217,7 +204,7 @@ class TestRefusalAndRetry:
 
     @pytest.mark.asyncio
     async def test_refusal_message_returns_structured_response(
-        self, settings, mock_retriever, mock_reranker, mock_vector_store
+        self, settings, mock_retriever, mock_vector_store
     ):
         """Test that exact refusal message returns empty citations and confidence 0.0."""
         with patch("src.paperlens.api.rag.ollama.AsyncClient") as mock_client_class:

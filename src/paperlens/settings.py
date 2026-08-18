@@ -49,11 +49,11 @@ class Settings(BaseSettings):
         default=Path("./data/processed/embedding_checkpoint.jsonl")
     )
     embedding_model: str = "BAAI/bge-large-en-v1.5"
-    reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-12-v2"
+    reranker_model: str = "BAAI/bge-reranker-base"
     retrieval_top_k: int = 20
     rerank_top_k: int = 5
     rrf_k: int = 60
-    hybrid_candidate_pool: int = 20
+    hybrid_candidate_pool: int = 50
     chunk_size_tokens: int = 600
     chunk_overlap_tokens: int = 100
 

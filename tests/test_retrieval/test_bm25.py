@@ -265,7 +265,7 @@ class TestBM25RetrieverTokenization:
     def test_tokenize_lowercases(self, sample_chunks: list[Chunk]) -> None:
         r = BM25Retriever(sample_chunks)
         tokens = r._tokenize("MACHINE Learning")
-        assert tokens == ["machine", "learning"]
+        assert tokens == ["machine", "learn"]
 
     def test_tokenize_splits_on_whitespace(self, sample_chunks: list[Chunk]) -> None:
         r = BM25Retriever(sample_chunks)

@@ -53,6 +53,8 @@ plan/
 
 # Misc.
 docs/hardware_baseline.txt
+eval/*.bak
+eval/chunk_discovery_results.json
 
 # Frontend — React / Vite
 frontend/node_modules/
