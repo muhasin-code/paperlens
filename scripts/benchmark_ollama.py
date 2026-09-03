@@ -128,7 +128,7 @@ async def main() -> None:
     print("=" * 60)
 
     for model in models:
-        print(f"\n▶ Model: {model}")
+        print(f"\n Model: {model}")
         for prompt in PROMPTS:
             print(f"  Prompt: {prompt[:50]}...")
             try:
@@ -140,13 +140,13 @@ async def main() -> None:
                         f"TTFT {r.ttft_ms:.1f} ms, Peak RSS {r.peak_rss_mb:.1f} MB"
                     )
             except Exception as exc:  # noqa: BLE001
-                print(f"    ✗ Failed: {exc}")
+                print(f"    Failed: {exc}")
 
     # Save raw results
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("w", encoding="utf-8") as f:
         json.dump([asdict(r) for r in all_results], f, indent=2, ensure_ascii=False)
-    print(f"\n✓ Raw results saved to {args.output}")
+    print(f"\n Raw results saved to {args.output}")
 
     # Summary table
     print("\n=== Summary (median across runs & prompts) ===")

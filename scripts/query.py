@@ -55,14 +55,14 @@ async def main() -> None:
             resp.raise_for_status()
             data = resp.json()
         except httpx.HTTPStatusError as exc:
-            print(f"✗ HTTP {exc.response.status_code}: {exc.response.text}")
+            print(f" HTTP {exc.response.status_code}: {exc.response.text}")
             sys.exit(1)
         except httpx.RequestError as exc:
-            print(f"✗ Request failed: {exc}")
+            print(f" Request failed: {exc}")
             print("  Is the server running? Start with: make run")
             sys.exit(1)
 
-    print("✓ Response received")
+    print(" Response received")
     print(f"  Answer: {data['answer'][:200]}{'...' if len(data['answer']) > 200 else ''}")
     print(f"  Confidence: {data['confidence']:.3f}")
     print(f"  Citations: {len(data['citations'])}")
