@@ -1,4 +1,4 @@
-"""RAG service: retrieval → context assembly → Ollama generation → cited answer."""
+"""RAG service: retrieval → context assembly → LLM generation → cited answer."""
 
 import json
 import logging
@@ -7,7 +7,6 @@ import time
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 
-import ollama
 from pydantic import BaseModel
 
 from src.paperlens.api.prompt_loader import PromptLoader
@@ -15,6 +14,7 @@ from src.paperlens.api.schemas import Citation, QueryRequest, QueryResponse
 from src.paperlens.embedding.embedder import EmbeddingModel
 from src.paperlens.embedding.retriever import RetrievalResult, SemanticRetriever
 from src.paperlens.embedding.vector_store import VectorStore
+from src.paperlens.llm.base import LLMProvider
 from src.paperlens.retrieval.hybrid import HybridRetriever
 from src.paperlens.settings import Settings
 
@@ -108,6 +108,7 @@ class RAGService:
     def __init__(
         self,
         settings: Settings,
+        llm_provider: LLMProvider,
         retriever: SemanticRetriever | None = None,
         hybrid_retriever: HybridRetriever | None = None,
     ) -> None:
@@ -127,7 +128,7 @@ class RAGService:
         self._prompt_loader = PromptLoader(self.settings)
         self._prompt_template = self._prompt_loader.load_prompt()
 
-        self._ollama_client = ollama.AsyncClient(host=settings.ollama_base_url)
+        self.llm_provider = llm_provider
         self.primary_model = settings.ollama_model
         self.fallback_model = FALLBACK_MODEL
         # Health check cache (TTL 10 seconds)
@@ -220,21 +221,18 @@ class RAGService:
 
         # 4) LLM generation (with fallback) - stream tokens
         generation_start = time.perf_counter()
-        prompt = self._prompt_template.format(context=context, query=request.query)
+        prompt = self._prompt_template.build_prompt(context=context, query=request.query)
         model = request.model or self.primary_model
         response_text = ""
 
         for attempt, m in enumerate((model, self.fallback_model)):
             try:
                 logger.info("Generating with model=%s (attempt %d)", m, attempt + 1)
-                stream = await self._ollama_client.generate(
-                    model=m,
+                async for token in self.llm_provider.stream(
                     prompt=prompt,
+                    model=m,
                     options={"temperature": 0.1, "num_predict": 256},
-                    stream=True,
-                )
-                async for chunk in stream:
-                    token = chunk.get("response", "")
+                ):
                     if token:
                         yield f"data: {json.dumps({'token': token})}\n\n"
                         response_text += token
@@ -250,7 +248,7 @@ class RAGService:
                 yield f"data: {json.dumps({'generation_time_ms': generation_time_ms, 'total_time_ms': total_time_ms, 'confidence': confidence, 'model': m, 'done': True})}\n\n"
                 return
             except Exception as exc:  # noqa: BLE001
-                logger.warning("Ollama generation failed with %s: %s", m, exc)
+                logger.warning("LLM generation failed with %s: %s", m, exc)
                 if attempt == 0:
                     continue  # try fallback
                 raise RuntimeError(
@@ -276,7 +274,7 @@ class RAGService:
     async def _generate_with_fallback(
         self, query: str, context: str, model_override: str | None, attempt: int = 0
     ) -> GenerationResult:
-        """Call Ollama generate; on failure, retry once for malformed output, then fall back.
+        """Call LLM provider generate; on failure, retry once for malformed output, then fall back.
 
         Args:
             query: Original query string
@@ -305,13 +303,12 @@ class RAGService:
                     retry + 1,
                 )
                 start = time.perf_counter()
-                resp = await self._ollama_client.generate(
-                    model=model,
+                text = await self.llm_provider.generate(
                     prompt=prompt,
+                    model=model,
                     options={"temperature": 0.1, "num_predict": 256},
                 )
                 latency_ms = (time.perf_counter() - start) * 1000
-                text = resp.get("response", "")
                 logger.debug("LLM raw response: %s", text[:200])
 
                 is_valid, result = LLMOutput.validate_response(text, refusal_msg, has_context)
@@ -333,7 +330,7 @@ class RAGService:
                     continue
 
             except Exception as exc:
-                logger.warning("Ollama generation failed with %s: %s", model, exc)
+                logger.warning("LLM generation failed with %s: %s", model, exc)
                 if attempt == 0:
                     # Switch to fallback model for the retry
                     model = self.fallback_model
@@ -366,23 +363,22 @@ class RAGService:
         return citations
 
     async def health_check(self) -> dict:
-        """Check ChromaDB collection count and Ollama reachability (cached 10s)."""
+        """Check ChromaDB collection count and LLM provider reachability (cached 10s)."""
         now = time.perf_counter()
         if self._health_cache and (now - self._health_cache[0]) < self._health_ttl:
             return self._health_cache[1]
 
         chroma_count = self._vector_store.count()
 
-        ollama_ok = False
+        llm_ok = False
         try:
-            await self._ollama_client.list()
-            ollama_ok = True
+            llm_ok = await self.llm_provider.is_reachable()
         except Exception as exc:  # noqa: BLE001
-            logger.warning("Ollama health check failed: %s", exc)
+            logger.warning("LLM provider health check failed: %s", exc)
 
         result = {
             "chroma_vector_count": chroma_count,
-            "ollama_reachable": ollama_ok,
+            "ollama_reachable": llm_ok,
         }
         self._health_cache = (now, result)
         return result

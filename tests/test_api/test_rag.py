@@ -8,6 +8,7 @@ from src.paperlens.api.rag import RAGService
 from src.paperlens.api.schemas import QueryRequest
 from src.paperlens.embedding.models import RetrievalResult
 from src.paperlens.embedding.retriever import SemanticRetriever
+from src.paperlens.llm.base import LLMProvider
 from src.paperlens.parsing.models import Chunk
 from src.paperlens.settings import Settings
 
@@ -46,15 +47,22 @@ def mock_retriever() -> MagicMock:
 
 
 @pytest.fixture
-def mock_ollama_client():
-    with patch("src.paperlens.api.rag.ollama.AsyncClient") as mock_client_class:
-        mock_client = AsyncMock()
-        mock_client_class.return_value = mock_client
-        mock_client.generate.return_value = {
-            "response": "The paper proposes cosine annealing with warm restarts [2401.00001v1_chunk_0001]."
-        }
-        mock_client.list.return_value = {"models": [{"name": "phi4-mini"}]}
-        yield mock_client
+def mock_llm_provider() -> AsyncMock:
+    """Mock LLMProvider with generate, stream, and is_reachable methods."""
+    provider = AsyncMock(spec=LLMProvider)
+    provider.generate.return_value = (
+        "The paper proposes cosine annealing with warm restarts [2401.00001v1_chunk_0001]."
+    )
+    provider.stream.return_value = iter(
+        [
+            "The paper proposes ",
+            "cosine annealing ",
+            "with warm restarts ",
+            "[2401.00001v1_chunk_0001].",
+        ]
+    )
+    provider.is_reachable.return_value = True
+    return provider
 
 
 @pytest.fixture
@@ -70,9 +78,9 @@ def mock_vector_store():
 class TestRAGService:
     @pytest.mark.asyncio
     async def test_query_returns_cited_answer(
-        self, settings, mock_retriever, mock_ollama_client, mock_vector_store
+        self, settings, mock_retriever, mock_llm_provider, mock_vector_store
     ):
-        service = RAGService(settings, retriever=mock_retriever)
+        service = RAGService(settings, llm_provider=mock_llm_provider, retriever=mock_retriever)
         request = QueryRequest(query="What learning rate schedule is proposed?")
         response = await service.query(request)
 
@@ -96,10 +104,10 @@ class TestRAGService:
 
     @pytest.mark.asyncio
     async def test_query_empty_retrieval_returns_fallback(
-        self, settings, mock_retriever, mock_ollama_client, mock_vector_store
+        self, settings, mock_retriever, mock_llm_provider, mock_vector_store
     ):
         mock_retriever.search.return_value = []
-        service = RAGService(settings, retriever=mock_retriever)
+        service = RAGService(settings, llm_provider=mock_llm_provider, retriever=mock_retriever)
         request = QueryRequest(query="Completely unrelated question")
         response = await service.query(request)
 
@@ -109,28 +117,28 @@ class TestRAGService:
 
     @pytest.mark.asyncio
     async def test_fallback_model_used_on_primary_failure(
-        self, settings, mock_retriever, mock_ollama_client, mock_vector_store
+        self, settings, mock_retriever, mock_llm_provider, mock_vector_store
     ):
         # First call fails, second succeeds
-        mock_ollama_client.generate.side_effect = [
+        mock_llm_provider.generate.side_effect = [
             Exception("Model not found"),
-            {"response": "Fallback answer [2401.00001v1_chunk_0001]."},
+            "Fallback answer [2401.00001v1_chunk_0001].",
         ]
-        service = RAGService(settings, retriever=mock_retriever)
+        service = RAGService(settings, llm_provider=mock_llm_provider, retriever=mock_retriever)
         request = QueryRequest(query="Test query")
         response = await service.query(request)
 
         assert response.answer == "Fallback answer [2401.00001v1_chunk_0001]."
-        assert mock_ollama_client.generate.call_count == 2
+        assert mock_llm_provider.generate.call_count == 2
         # Second call should use fallback model
-        call_args = mock_ollama_client.generate.call_args_list[1]
+        call_args = mock_llm_provider.generate.call_args_list[1]
         assert call_args.kwargs["model"] == "llama3.2:1b"
 
     @pytest.mark.asyncio
     async def test_health_check_reports_chroma_and_ollama(
-        self, settings, mock_retriever, mock_ollama_client, mock_vector_store
+        self, settings, mock_retriever, mock_llm_provider, mock_vector_store
     ):
-        service = RAGService(settings, retriever=mock_retriever)
+        service = RAGService(settings, llm_provider=mock_llm_provider, retriever=mock_retriever)
         health = await service.health_check()
 
         assert "chroma_vector_count" in health
@@ -141,10 +149,10 @@ class TestRAGService:
 class TestRefusalAndRetry:
     @pytest.mark.asyncio
     async def test_response_with_valid_citations_succeeds(
-        self, settings, mock_retriever, mock_ollama_client, mock_vector_store
+        self, settings, mock_retriever, mock_llm_provider, mock_vector_store
     ):
         """Test that response with citation markers passes validation."""
-        service = RAGService(settings, retriever=mock_retriever)
+        service = RAGService(settings, llm_provider=mock_llm_provider, retriever=mock_retriever)
         request = QueryRequest(query="What is tested?")
 
         with patch.object(service, "_prompt_template") as mock_template:
@@ -159,68 +167,60 @@ class TestRefusalAndRetry:
         self, settings, mock_retriever, mock_vector_store
     ):
         """Test that empty LLM response triggers retry, then fallback model."""
-        with patch("src.paperlens.api.rag.ollama.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client_class.return_value = mock_client
+        mock_provider = AsyncMock(spec=LLMProvider)
+        mock_provider.generate.side_effect = [
+            "",  # Empty response triggers retry
+            "Valid answer [2401.00001v1_chunk_0001].",
+        ]
+        mock_provider.is_reachable.return_value = True
+        mock_provider.stream.return_value = iter(["Valid answer [2401.00001v1_chunk_0001]."])
 
-            # First call returns empty (triggers retry), second call succeeds
-            mock_client.generate.side_effect = [
-                {"response": ""},  # Empty response triggers retry per validate_response lines 60-61
-                {"response": "Valid answer [2401.00001v1_chunk_0001]."},
-            ]
-            mock_client.list.return_value = {"models": [{"name": "phi4-mini"}]}
+        service = RAGService(settings, llm_provider=mock_provider, retriever=mock_retriever)
+        request = QueryRequest(query="Test query")
 
-            service = RAGService(settings, retriever=mock_retriever)
-            request = QueryRequest(query="Test query")
+        response = await service.query(request)
 
-            response = await service.query(request)
-
-            assert response.answer == "Valid answer [2401.00001v1_chunk_0001]."
-            assert mock_client.generate.call_count == 2
+        assert response.answer == "Valid answer [2401.00001v1_chunk_0001]."
+        assert mock_provider.generate.call_count == 2
 
     @pytest.mark.asyncio
     async def test_missing_citation_triggers_retry_then_fallback(
         self, settings, mock_retriever, mock_vector_store
     ):
         """Test that response without citation markers triggers retry, then fallback."""
-        with patch("src.paperlens.api.rag.ollama.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client_class.return_value = mock_client
+        mock_provider = AsyncMock(spec=LLMProvider)
+        mock_provider.generate.side_effect = [
+            "",  # Empty triggers retry
+            "Valid answer [2401.00001v1_chunk_0001].",
+        ]
+        mock_provider.is_reachable.return_value = True
+        mock_provider.stream.return_value = iter(["Valid answer [2401.00001v1_chunk_0001]."])
 
-            # First call returns empty (triggers retry), second call succeeds
-            mock_client.generate.side_effect = [
-                {"response": ""},  # Empty triggers retry
-                {"response": "Valid answer [2401.00001v1_chunk_0001]."},
-            ]
-            mock_client.list.return_value = {"models": [{"name": "phi4-mini"}]}
+        service = RAGService(settings, llm_provider=mock_provider, retriever=mock_retriever)
+        request = QueryRequest(query="Test query")
 
-            service = RAGService(settings, retriever=mock_retriever)
-            request = QueryRequest(query="Test query")
+        response = await service.query(request)
 
-            response = await service.query(request)
-
-            assert "[2401.00001v1_chunk_0001]" in response.answer
-            assert mock_client.generate.call_count == 2
+        assert "[2401.00001v1_chunk_0001]" in response.answer
+        assert mock_provider.generate.call_count == 2
 
     @pytest.mark.asyncio
     async def test_refusal_message_returns_structured_response(
         self, settings, mock_retriever, mock_vector_store
     ):
         """Test that exact refusal message returns empty citations and confidence 0.0."""
-        with patch("src.paperlens.api.rag.ollama.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client_class.return_value = mock_client
+        mock_provider = AsyncMock(spec=LLMProvider)
+        refusal_msg = "I cannot answer from the provided sources."
+        mock_provider.generate.return_value = refusal_msg
+        mock_provider.is_reachable.return_value = True
+        mock_provider.stream.return_value = iter([refusal_msg])
 
-            refusal_msg = "I cannot answer from the provided sources."
-            mock_client.generate.return_value = {"response": refusal_msg}
-            mock_client.list.return_value = {"models": [{"name": "phi4-mini"}]}
+        service = RAGService(settings, llm_provider=mock_provider, retriever=mock_retriever)
+        request = QueryRequest(query="Test query")
 
-            service = RAGService(settings, retriever=mock_retriever)
-            request = QueryRequest(query="Test query")
+        response = await service.query(request)
 
-            response = await service.query(request)
-
-            assert response.answer == refusal_msg
-            assert response.citations == []
-            assert response.confidence == 0.0
-            assert mock_client.generate.call_count == 1
+        assert response.answer == refusal_msg
+        assert response.citations == []
+        assert response.confidence == 0.0
+        assert mock_provider.generate.call_count == 1

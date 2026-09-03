@@ -2,11 +2,12 @@
 
 import logging
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 
 from src.paperlens.api.rag import RAGService
 from src.paperlens.api.schemas import HealthResponse, QueryRequest, QueryResponse
+from src.paperlens.llm.base import LLMProvider
 from src.paperlens.settings import get_settings
 
 logger = logging.getLogger("paperlens.api")
@@ -17,11 +18,12 @@ router = APIRouter(prefix="", tags=["rag"])
 _rag_service: RAGService | None = None
 
 
-def get_rag_service() -> RAGService:
+def get_rag_service(request: Request) -> RAGService:
     """Return a singleton RAGService instance."""
     global _rag_service
     if _rag_service is None:
-        _rag_service = RAGService(get_settings())
+        llm_provider: LLMProvider = request.app.state.llm_provider
+        _rag_service = RAGService(get_settings(), llm_provider=llm_provider)
     return _rag_service
 
 
@@ -32,9 +34,9 @@ def get_rag_service() -> RAGService:
     summary="Query the PaperLens RAG system",
     description="Submit a natural-language question. Returns a cited answer with source chunk references.",
 )
-async def query_endpoint(request: QueryRequest) -> QueryResponse:
+async def query_endpoint(request: QueryRequest, http_request: Request) -> QueryResponse:
     """Handle POST /query — main RAG endpoint."""
-    service = get_rag_service()
+    service = get_rag_service(http_request)
     try:
         return await service.query(request)
     except RuntimeError as exc:
@@ -50,9 +52,9 @@ async def query_endpoint(request: QueryRequest) -> QueryResponse:
     summary="Query the PaperLens RAG system (SSE streaming)",
     description="Submit a natural-language question. Returns Server-Sent Events with token-by-token response.",
 )
-async def query_stream_endpoint(request: QueryRequest):
+async def query_stream_endpoint(request: QueryRequest, http_request: Request):
     """Handle POST /query/stream — streaming RAG endpoint."""
-    service = get_rag_service()
+    service = get_rag_service(http_request)
     try:
         return StreamingResponse(
             service.query_stream(request),
@@ -75,11 +77,11 @@ async def query_stream_endpoint(request: QueryRequest):
     response_model=HealthResponse,
     status_code=status.HTTP_200_OK,
     summary="Health check with dependency status",
-    description="Returns server status plus ChromaDB vector count and Ollama reachability.",
+    description="Returns server status plus ChromaDB vector count and LLM provider reachability.",
 )
-async def health_endpoint() -> HealthResponse:
+async def health_endpoint(http_request: Request) -> HealthResponse:
     """Handle GET /health — extended liveness/readiness probe."""
-    service = get_rag_service()
+    service = get_rag_service(http_request)
     health = await service.health_check()
 
     return HealthResponse(

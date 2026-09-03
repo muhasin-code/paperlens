@@ -3,7 +3,11 @@
 Verifies that the test suite runs and the PaperLens package is importable.
 """
 
+from unittest.mock import AsyncMock
+
 from fastapi.testclient import TestClient
+
+from src.paperlens.llm.base import LLMProvider
 
 
 def test_paperlens_package_importable() -> None:
@@ -17,6 +21,11 @@ def test_paperlens_package_importable() -> None:
 def test_health_endpoint_schema() -> None:
     """Smoke test: FastAPI app instance is created and /health route exists with new schema."""
     from src.paperlens.main import app
+
+    # Mock the llm_provider in app.state since TestClient doesn't run lifespan
+    mock_provider = AsyncMock(spec=LLMProvider)
+    mock_provider.is_reachable.return_value = True
+    app.state.llm_provider = mock_provider
 
     client = TestClient(app)
     response = client.get("/health")
