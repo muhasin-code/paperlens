@@ -205,7 +205,7 @@ The hybrid retriever already narrows the search space to the top 20 RRF candidat
 
 | Field | Value |
 |---|---|
-| **Model** | `cross-encoder/ms-marco-MiniLM-L-12-v2` |
+| **Model** | `BAAI/bge-reranker-base` |
 | **Size** | ~85 MB (downloads from HuggingFace on first run, then cached) |
 | **Framework** | `sentence-transformers.CrossEncoder` |
 | **Inference mode** | CPU (no CUDA required) |

@@ -6,7 +6,7 @@
 
 ## Methodology
 
-- **Models:** `llama3.2:1b` (1.3B params, primary) — `phi4-mini` was not benchmarked in this run
+- **Models:** `phi4-mini` (1.3B params, primary)
 - **Client:** `ollama` Python client v0.4+ with `stream=True`
 - **Prompts:** 5 diverse ML/AI questions (see `scripts/benchmark_ollama.py::PROMPTS`)
 - **Runs:** 3 runs per model per prompt (15 total); median reported
@@ -24,7 +24,7 @@
 
 | Model | Tokens/sec (median) | TTFT (ms, median) | Peak RSS (MB, median) | Total Latency (ms, median) |
 |---|---:|---:|---:|---:|
-| `llama3.2:1b` | 10.1 | 475.5 | 49.5 | 22,102 |
+| `phi4-mini` | 10.1 | 475.5 | 49.5 | 22,102 |
 
 _Raw data: [`docs/benchmarks.json`](benchmarks.json)_
 
@@ -32,7 +32,7 @@ _Raw data: [`docs/benchmarks.json`](benchmarks.json)_
 
 ## Analysis
 
-### `llama3.2:1b` (Primary)
+### `phi4-mini` (Primary)
 
 - **Quality:** Adequate for simple factoid questions; weaker on complex synthesis compared to larger models
 - **Speed:** ~10.1 tokens/sec; TTFT ~475 ms
@@ -46,7 +46,7 @@ _Raw data: [`docs/benchmarks.json`](benchmarks.json)_
 | Query embedding (BGE-large, CPU) | 150–200 | `sentence-transformers` encode with prefix |
 | ChromaDB HNSW search (top-20) | 20–40 | In-memory index, cosine space |
 | Context assembly | <5 | String concatenation |
-| **Ollama generation (`llama3.2:1b`)** | **~22,100** | **Dominant cost** — 1.3B params on CPU |
+| **Ollama generation (`phi4-mini`)** | **~22,100** | **Dominant cost** — 1.3B params on CPU |
 | **Total (primary)** | **~22,500** | End-to-end |
 
 **Mitigations (future phases):**
@@ -75,12 +75,12 @@ _Raw data: [`docs/benchmarks.json`](benchmarks.json)_
 ollama serve
 
 # 2. Pull model
-ollama pull llama3.2:1b
+ollama pull phi4-mini
 
 # 3. Run benchmark (from repo root, .venv activated)
 make benchmark
 # or directly:
-python scripts/benchmark_ollama.py --model llama3.2:1b --runs 3
+python scripts/benchmark_ollama.py --model phi4-mini --runs 3
 ```
 
 Results are saved to `docs/benchmarks.json` and the summary table printed to stdout.
