@@ -33,14 +33,8 @@ class EmbeddingModel:
         self.batch_size = batch_size
         self.device = "cpu"  # CPU-only box; override via settings if GPU available
         self._model: SentenceTransformer | None = None  # Lazy-loaded
-        self.dimension = self._model.get_embedding_dimension()
+        self.dimension: int | None = None
         self.logger = logger
-        self.logger.info(
-            "Loaded embedding model %s (dim=%d, device=%s)",
-            self.model_name,
-            self.dimension,
-            self.device,
-        )
 
     def _get_model(self) -> SentenceTransformer:
         """Lazily load the SentenceTransformer model on first use."""
