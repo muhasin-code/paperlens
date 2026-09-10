@@ -32,7 +32,7 @@ class EmbeddingModel:
         self.model_name = settings.embedding_model
         self.batch_size = batch_size
         self.device = "cpu"  # CPU-only box; override via settings if GPU available
-        self._model = SentenceTransformer(self.model_name, device=self.device)
+        self._model: SentenceTransformer | None = None  # Lazy-loaded
         self.dimension = self._model.get_embedding_dimension()
         self.logger = logger
         self.logger.info(
@@ -42,12 +42,25 @@ class EmbeddingModel:
             self.device,
         )
 
+    def _get_model(self) -> SentenceTransformer:
+        """Lazily load the SentenceTransformer model on first use."""
+        if self._model is None:
+            self._model = SentenceTransformer(self.model_name, device=self.device)
+            self.dimension = self._model.get_embedding_dimension()
+            self.logger.info(
+                "Loaded embedding model %s (dim=%d, device=%s)",
+                self.model_name,
+                self.dimension,
+                self.device,
+            )
+        return self._model
+
     def embed_chunks(self, chunks: list[Chunk]) -> list[EmbeddedChunk]:
         """Embed a list of corpus chunks (no query prefix, normalized)."""
         if not chunks:
             return []
         texts = [c.text for c in chunks]
-        vectors = self._model.encode(
+        vectors = self._get_model().encode(
             texts,
             batch_size=self.batch_size,
             show_progress_bar=True,
@@ -62,7 +75,7 @@ class EmbeddingModel:
     def embed_query(self, query: str) -> list[float]:
         """Embed a single query string WITH the BGE query prefix, normalized."""
         prefixed = f"{BGE_QUERY_PREFIX}{query}"
-        vec = self._model.encode(
+        vec = self._get_model().encode(
             [prefixed],
             batch_size=1,
             show_progress_bar=False,
@@ -74,7 +87,7 @@ class EmbeddingModel:
     def embed_queries(self, queries: list[str]) -> list[list[float]]:
         """Embed multiple queries (prefixed, normalized)."""
         prefixed = [f"{BGE_QUERY_PREFIX}{q}" for q in queries]
-        vecs = self._model.encode(
+        vecs = self._get_model().encode(
             prefixed,
             batch_size=self.batch_size,
             show_progress_bar=False,
@@ -82,3 +95,6 @@ class EmbeddingModel:
             normalize_embeddings=True,
         )
         return [v.tolist() for v in vecs]
+
+    def __repr__(self) -> str:
+        return f"EmbeddingModel(model_name={self.model_name!r}, device={self.device!r}, loaded={self._model is not None})"

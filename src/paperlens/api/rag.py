@@ -382,3 +382,10 @@ class RAGService:
         }
         self._health_cache = (now, result)
         return result
+
+    def __repr__(self) -> str:
+        return (
+            f"RAGService(primary_model={self.primary_model!r}, "
+            f"fallback_model={self.fallback_model!r}, "
+            f"retriever_type={type(self.retriever).__name__})"
+        )
