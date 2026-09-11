@@ -54,6 +54,7 @@ def fake_model() -> MagicMock:
 @pytest.fixture
 def embedder(fake_model: MagicMock, request) -> EmbeddingModel:
     patcher = patch("src.paperlens.embedding.embedder.SentenceTransformer", return_value=fake_model)
+    patcher.start()
     e = EmbeddingModel(Settings(), batch_size=2)
     request.addfinalizer(patcher.stop)
     return e
