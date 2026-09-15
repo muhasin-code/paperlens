@@ -84,11 +84,13 @@ async def health_endpoint(http_request: Request) -> HealthResponse:
     service = get_rag_service(http_request)
     health = await service.health_check()
 
+    settings = get_settings()
     return HealthResponse(
-        status="ok" if health["ollama_reachable"] else "degraded",
+        status="ok" if health["llm_reachable"] else "degraded",
         chroma_collection="paperlens_chunks",
         chroma_vector_count=health["chroma_vector_count"],
-        ollama_reachable=health["ollama_reachable"],
-        ollama_model=service.primary_model,
-        ollama_fallback_model=service.fallback_model,
+        llm_reachable=health["llm_reachable"],
+        llm_provider=settings.llm_provider,
+        llm_model=service.primary_model,
+        llm_fallback_model=service.fallback_model,
     )

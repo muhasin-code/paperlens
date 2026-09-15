@@ -67,9 +67,12 @@ class HealthResponse(BaseModel):
     status: str = Field(..., description="'ok' if server is up and dependencies reachable.")
     chroma_collection: str = Field(..., description="ChromaDB collection name.")
     chroma_vector_count: int = Field(..., description="Number of vectors in the collection.")
-    ollama_reachable: bool = Field(..., description="Whether Ollama responded to /api/tags.")
-    ollama_model: str = Field(..., description="Configured Ollama model (settings.ollama_model).")
-    ollama_fallback_model: str = Field(..., description="Fallback model name (llama3.2:1b).")
+    llm_reachable: bool = Field(
+        ..., description="Whether the configured LLM provider is reachable."
+    )
+    llm_provider: str = Field(..., description="Active LLM provider (ollama, openai_compat, etc.).")
+    llm_model: str = Field(..., description="Active LLM model name.")
+    llm_fallback_model: str = Field(..., description="Fallback model name.")
 
 
 class Bm25SearchRequest(BaseModel):

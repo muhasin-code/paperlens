@@ -129,7 +129,7 @@ class RAGService:
         self._prompt_template = self._prompt_loader.load_prompt()
 
         self.llm_provider = llm_provider
-        self.primary_model = settings.ollama_model
+        self.primary_model = settings.llm_model or settings.ollama_model
         self.fallback_model = FALLBACK_MODEL
         # Health check cache (TTL 10 seconds)
         self._health_cache: tuple[float, dict] | None = None
@@ -378,7 +378,7 @@ class RAGService:
 
         result = {
             "chroma_vector_count": chroma_count,
-            "ollama_reachable": llm_ok,
+            "llm_reachable": llm_ok,
         }
         self._health_cache = (now, result)
         return result

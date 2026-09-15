@@ -1,5 +1,6 @@
 """OpenAI-compatible provider using httpx for remote LLM APIs."""
 
+import json
 import logging
 from collections.abc import AsyncIterator
 
@@ -46,7 +47,7 @@ class OpenAICompatProvider(LLMProvider):
         temperature = (options or {}).get("temperature", 0.1)
 
         response = await client.post(
-            f"{self.base_url}/v1/chat/completions",
+            f"{self.base_url}/chat/completions",
             json={
                 "model": model,
                 "messages": [{"role": "user", "content": prompt}],
@@ -67,7 +68,8 @@ class OpenAICompatProvider(LLMProvider):
         temperature = (options or {}).get("temperature", 0.1)
 
         async with client.stream(
-            f"{self.base_url}/v1/chat/completions",
+            "POST",
+            f"{self.base_url}/chat/completions",
             json={
                 "model": model,
                 "messages": [{"role": "user", "content": prompt}],
@@ -80,7 +82,7 @@ class OpenAICompatProvider(LLMProvider):
                     line = line[6:]
                 if line and line != "[DONE]":
                     try:
-                        data = httpx._content.json_decoding.json.loads(line)
+                        data = json.loads(line)
                         if "choices" in data and data["choices"]:
                             delta = data["choices"][0].get("delta", {})
                             if "content" in delta:
@@ -91,7 +93,7 @@ class OpenAICompatProvider(LLMProvider):
     async def is_reachable(self) -> bool:
         try:
             client = self._get_client()
-            response = await client.get(f"{self.base_url}/v1/models")
+            response = await client.get(f"{self.base_url}/models")
             return response.status_code == 200
         except Exception as exc:
             logger.warning("OpenAI-compatible provider health check failed: %s", exc)
