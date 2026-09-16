@@ -34,6 +34,6 @@ def test_health_endpoint_schema() -> None:
     assert data["status"] in ("ok", "degraded")
     assert "chroma_collection" in data
     assert "chroma_vector_count" in data
-    assert "ollama_reachable" in data
-    assert "ollama_model" in data
-    assert "ollama_fallback_model" in data
+    assert "llm_reachable" in data
+    assert "llm_model" in data
+    assert "llm_fallback_model" in data

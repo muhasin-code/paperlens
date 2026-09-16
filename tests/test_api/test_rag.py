@@ -142,8 +142,8 @@ class TestRAGService:
         health = await service.health_check()
 
         assert "chroma_vector_count" in health
-        assert "ollama_reachable" in health
-        assert health["ollama_reachable"] is True
+        assert "llm_reachable" in health
+        assert health["llm_reachable"] is True
 
 
 class TestRefusalAndRetry:
