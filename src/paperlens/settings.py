@@ -79,6 +79,17 @@ class Settings(BaseSettings):
     ragas_faithfulness_threshold: float = 0.75
     gold_dataset_path: Path = Field(default=Path("./eval/gold_dataset.jsonl"))
 
+    # ── Extraction Dataset (Phase 5) ────────────────────────────────────────────────
+    extraction_max_examples: int = 2000
+    extraction_sections: str = "method,experiments,results,evaluation"
+    extraction_checkpoint_path: Path = Field(
+        default=Path("./data/extraction_dataset/checkpoint.jsonl")
+    )
+    extraction_train_path: Path = Field(default=Path("./data/extraction_dataset/train.jsonl"))
+    extraction_val_path: Path = Field(default=Path("./data/extraction_dataset/val.jsonl"))
+    extraction_val_split: float = 0.1
+    extraction_system_prompt: str | None = None
+
 
 @lru_cache
 def get_settings() -> Settings:
