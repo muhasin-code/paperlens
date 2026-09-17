@@ -127,7 +127,9 @@ class ExtractionPipeline:
             Summary dict with counts and output paths
         """
         max_examples = limit or self.settings.extraction_max_examples
-        target_sections = set(sections) if sections else set(self.settings.extraction_sections)
+        target_sections = (
+            set(sections) if sections else set(self.settings.extraction_sections.split(","))
+        )
 
         if sections:
             self.SECTION_LABELS = set(sections)
