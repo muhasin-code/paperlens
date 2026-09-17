@@ -112,6 +112,23 @@ eval-retrieval:
 	python scripts/evaluate_retrieval.py
 
 
+# ─── Extraction Dataset (Phase 3) ───────────────────────────────────────────────
+
+build-extraction-dataset:
+	@echo "-> Building extraction dataset for QLoRA fine-tuning..."
+	@echo "   This may take several hours due to API rate limits."
+	@echo "   Use 'make build-extraction-dry' for a quick test."
+	python scripts/build_extraction_dataset.py
+
+build-extraction-dry:
+	@echo "-> Dry run: annotating 5 examples, no writes..."
+	python scripts/build_extraction_dataset.py --dry-run
+
+validate-extraction-dataset:
+	@echo "-> Validating extraction dataset..."
+	python scripts/validate_extraction_dataset.py
+
+
 # ─── Development Server ───────────────────────────────────────────────────────────
 
 run-backend:
@@ -158,6 +175,9 @@ help:
 	@echo " make reranker-verify    Smoke-test: cross-encoder reranking"
 	@echo " make prompt-verify      Smoke-test: prompt loader"
 	@echo " make eval-retrieval      Run full retrieval benchmark (baseline vs hybrid vs hybrid+reranker)"
+	@echo "  make build-extraction-dataset  Build extraction dataset (API annotation)"
+	@echo "  make build-extraction-dry      Dry run: annotate 5 examples, no writes"
+	@echo "  make validate-extraction-dataset Validate dataset integrity"
 	@echo " make run-backend		Start FastAPI dev server"
 	@echo " make run-frontend		Start React dev server"
 	@echo " make benchmark      		Run Ollama inference benchmarks (tokens/sec, TTFT, RAM)"
