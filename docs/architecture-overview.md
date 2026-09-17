@@ -67,7 +67,7 @@ every PR. A faithfulness score below 0.75 fails the build.
 
 ```
 User query
-  → Gradio UI (Phase 1)
+  → React UI (Phase 1)
   → FastAPI /query
   → QueryRouter
        ├─ Conversational → HybridRetrieval (BM25 + semantic) → RRF → Reranker → Ollama → CitationValidator → SSEStream
@@ -83,7 +83,7 @@ User query
 | Embeddings | `BAAI/bge-large-en-v1.5` | MTEB-leading open model; runs on CPU |
 | Vector store | ChromaDB | Embedded, no separate service in Phase 1 |
 | Keyword search | rank_bm25 | Minimal dependency; complements dense retrieval |
-| Reranker | `cross-encoder/ms-marco-MiniLM-L-12-v2` | Strong precision gains at low latency |
+| Reranker | `BAAI/bge-reranker-base` | Strong precision gains at low latency |
 | LLM | Ollama / phi4-mini | Local, zero API cost, swappable |
 | Fine-tuning | QLoRA (TRL + PEFT) | VRAM-efficient; Colab-compatible |
 | Observability | Langfuse (self-hosted) | Open-source; Docker-native |

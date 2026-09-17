@@ -26,13 +26,30 @@ class VectorStore:
 
     def __init__(self, settings: Settings) -> None:
         self.persist_dir: Path = settings.chroma_persist_dir
-        self.persist_dir.mkdir(parents=True, exist_ok=True)
-        self.client = chromadb.PersistentClient(path=str(self.persist_dir))
-        self.collection = self.client.get_or_create_collection(
-            name=COLLECTION_NAME,
-            metadata={"hnsw:space": "cosine"},
-        )
+        self._client: chromadb.PersistentClient | None = None
+        self._collection: chromadb.Collection | None = None
         self.logger = logger
+
+    def _ensure_initialized(self) -> None:
+        """Lazily initialize ChromaDB client and collection on first use."""
+        if self._client is None:
+            self.persist_dir.mkdir(parents=True, exist_ok=True)
+            self._client = chromadb.PersistentClient(path=str(self.persist_dir))
+            self._collection = self._client.get_or_create_collection(
+                name=COLLECTION_NAME,
+                metadata={"hnsw:space": "cosine"},
+            )
+            self.logger.info("Initialized ChromaDB collection: %s", COLLECTION_NAME)
+
+    @property
+    def client(self) -> chromadb.PersistentClient:
+        self._ensure_initialized()
+        return self._client
+
+    @property
+    def collection(self) -> chromadb.Collection:
+        self._ensure_initialized()
+        return self._collection
 
     @staticmethod
     def _metadata_for(ec: EmbeddedChunk) -> dict:
@@ -80,9 +97,15 @@ class VectorStore:
 
     def reset(self) -> None:
         """Delete and recreate the collection (used by --rebuild)."""
-        self.client.delete_collection(COLLECTION_NAME)
-        self.collection = self.client.get_or_create_collection(
+        self._ensure_initialized()
+        self._client.delete_collection(COLLECTION_NAME)
+        self._collection = self._client.get_or_create_collection(
             name=COLLECTION_NAME,
             metadata={"hnsw:space": "cosine"},
         )
         self.logger.info("Reset collection %s", COLLECTION_NAME)
+
+    def __repr__(self) -> str:
+        return (
+            f"VectorStore(persist_dir={self.persist_dir!r}, initialized={self._client is not None})"
+        )

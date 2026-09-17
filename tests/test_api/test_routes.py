@@ -83,7 +83,7 @@ class TestHealthEndpoint:
     def test_health_ok_when_ollama_reachable(self, client, mock_rag_service):
         mock_rag_service.health_check.return_value = {
             "chroma_vector_count": 17330,
-            "ollama_reachable": True,
+            "llm_reachable": True,  # ← new key
         }
         mock_rag_service.primary_model = "phi4-mini"
         mock_rag_service.fallback_model = "llama3.2:1b"
@@ -94,14 +94,14 @@ class TestHealthEndpoint:
         assert data["status"] == "ok"
         assert data["chroma_collection"] == "paperlens_chunks"
         assert data["chroma_vector_count"] == 17330
-        assert data["ollama_reachable"] is True
-        assert data["ollama_model"] == "phi4-mini"
-        assert data["ollama_fallback_model"] == "llama3.2:1b"
+        assert data["llm_reachable"] is True
+        assert data["llm_model"] == "phi4-mini"
+        assert data["llm_fallback_model"] == "llama3.2:1b"
 
     def test_health_degraded_when_ollama_unreachable(self, client, mock_rag_service):
         mock_rag_service.health_check.return_value = {
             "chroma_vector_count": 17330,
-            "ollama_reachable": False,
+            "llm_reachable": False,  # ← new key
         }
         mock_rag_service.primary_model = "phi4-mini"
         mock_rag_service.fallback_model = "llama3.2:1b"
@@ -110,4 +110,4 @@ class TestHealthEndpoint:
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "degraded"
-        assert data["ollama_reachable"] is False
+        assert data["llm_reachable"] is False

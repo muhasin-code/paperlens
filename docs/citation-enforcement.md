@@ -205,9 +205,9 @@ After LLM generation, the response is validated:
 
 | Attempt | Model Used              | Condition                  |
 | ------- | ----------------------- | -------------------------- |
-| 1       | Primary (`llama3.2:1b`) | First generation           |
-| 2       | Primary (`llama3.2:1b`) | Retry for malformed output |
-| 3       | Fallback (`phi4-mini`)  | If 2 retries exhausted     |
+| 1       | Primary (`phi4-mini`) | First generation           |
+| 2       | Primary (`phi4-mini`) | Retry for malformed output |
+| 3       | Fallback (`llama3.2:1b`)  | If 2 retries exhausted     |
 
 
 **Maximum 2 retries** to avoid compounding latency on slow CPU inference (30-110 seconds per call).

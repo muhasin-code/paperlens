@@ -453,3 +453,11 @@ class BM25Retriever:
         retriever._build_start = 0
 
         return retriever
+
+    def __repr__(self) -> str:
+        built = self._bm25 is not None
+        return (
+            f"BM25Retriever(num_chunks={len(self.chunks)}, "
+            f"k1={self.k1}, b={self.b}, built={built}, "
+            f"index_path={self._index_path!r})"
+        )

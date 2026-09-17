@@ -120,3 +120,13 @@ class HybridRetriever:
             )
 
         return final_results
+
+    def __repr__(self) -> str:
+        return (
+            f"HybridRetriever(rrf_k={self._rrf_k}, "
+            f"candidate_pool={self._candidate_pool}, "
+            f"semantic_weight={self._semantic_weight}, "
+            f"bm25_weight={self._bm25_weight}, "
+            f"semantic_retriever={'set' if self._semantic_retriever else 'lazy'}, "
+            f"bm25_retriever={'set' if self._bm25_retriever else 'lazy'})"
+        )

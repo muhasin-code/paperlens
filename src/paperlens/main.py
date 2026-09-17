@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from src.paperlens.api.retrieval_routes import router as retrieval_router
 from src.paperlens.api.routes import router as api_router
+from src.paperlens.llm import get_llm_provider
 from src.paperlens.settings import get_settings
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -29,7 +30,13 @@ async def lifespan(app: FastAPI):
     logger = logging.getLogger("paperlens")
     logger.info("PaperLens API starting on %s:%d", settings.api_host, settings.api_port)
 
-    # 1) Load embedding model into module-level cache AND app.state
+    # 1) Load LLM provider
+    logger.info("Loading LLM provider (%s)...", settings.llm_provider)
+    llm_provider = get_llm_provider(settings)
+    app.state.llm_provider = llm_provider
+    logger.info("LLM provider loaded.")
+
+    # 2) Load embedding model into module-level cache AND app.state
     logger.info("Loading embedding model %s...", settings.embedding_model)
     from src.paperlens.api.rag import _get_embedding_model
 
@@ -41,7 +48,7 @@ async def lifespan(app: FastAPI):
         embedding_model.device,
     )
 
-    # 2) Load BM25 index into module-level singleton AND app.state
+    # 3) Load BM25 index into module-level singleton AND app.state
     logger.info("Loading BM25 index from %s...", settings.bm25_index_path)
     from src.paperlens.api.retrieval_routes import get_bm25_retriever
 
@@ -53,7 +60,7 @@ async def lifespan(app: FastAPI):
         logger.warning("BM25 index not loaded at startup: %s. Run 'make bm25-build'.", exc)
         app.state.bm25_retriever = None
 
-    # 3) Warm cross-encoder class-level singleton
+    # 4) Warm cross-encoder class-level singleton
     logger.info("Loading cross-encoder model %s...", settings.reranker_model)
     from src.paperlens.retrieval.reranker import CrossEncoderReranker
 

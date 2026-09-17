@@ -15,7 +15,7 @@ from src.paperlens.ingestion.models import Paper
 from src.paperlens.parsing.models import Chunk, Section
 from src.paperlens.settings import Settings
 
-logger = logging.getLogger("paperlense.parsing")
+logger = logging.getLogger("paperlens.parsing")
 
 # cl100k_base is the encoding used by OpenAI embedding models and is
 # the standard approximation for most open-source embedding models.

@@ -29,7 +29,6 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     api_host: str = "0.0.0.0"
     api_port: int = 8000
-    gradio_port: int = 7860
 
     # ── arXiv Ingestion (Phase 1) ───────────────────────────────────────────
     arxiv_category: str = "cs.LG"
@@ -60,6 +59,12 @@ class Settings(BaseSettings):
     # ── Ollama ──────────────────────────────────────────────────────────────
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "phi4-mini"
+
+    # ── LLM Provider (Phase 3) ─────────────────────────────────────────────────────
+    llm_provider: str = "ollama"  # options: ollama, openai_compat
+    llm_api_base_url: str = ""  # used when LLM_PROVIDER=openai_compat
+    llm_api_key: str = ""  # used when LLM_PROVIDER=openai_compat
+    llm_model: str = ""  # overrides OLLAMA_MODEL when set
 
     # ── Prompts (Phase 2) ───────────────────────────────────────────────────
     prompts_dir: Path = Field(default=Path("./configs/prompts"))

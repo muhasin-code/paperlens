@@ -58,12 +58,12 @@ def main():
             missing.extend(batch)
 
     if missing:
-        print(f"\n❌ VALIDATION FAILED: {len(missing)} chunk IDs NOT FOUND in ChromaDB:")
+        print(f"\n VALIDATION FAILED: {len(missing)} chunk IDs NOT FOUND in ChromaDB:")
         for cid in missing:
             print(f"  - {cid}")
         sys.exit(1)
     else:
-        print(f"\n✅ VALIDATION PASSED: All {len(all_chunk_ids)} chunk IDs exist in ChromaDB")
+        print(f"\n VALIDATION PASSED: All {len(all_chunk_ids)} chunk IDs exist in ChromaDB")
 
         # Also check paper-level IDs if present
         arxiv_ids = set()
@@ -77,9 +77,9 @@ def main():
             for arxiv_id in arxiv_ids:
                 result = store.collection.get(where={"arxiv_id": arxiv_id}, limit=1, include=[])
                 if not result["ids"]:
-                    print(f"  ⚠️  No chunks found for arXiv ID: {arxiv_id}")
+                    print(f"   No chunks found for arXiv ID: {arxiv_id}")
                 else:
-                    print(f"  ✅ {arxiv_id} - {len(result['ids'])} chunks found")
+                    print(f"   {arxiv_id} - {len(result['ids'])} chunks found")
 
 
 if __name__ == "__main__":
