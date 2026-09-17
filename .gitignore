@@ -23,6 +23,7 @@ credentials.json
 data/raw/
 data/processed/
 data/chroma/
+data/extraction_dataset/
 data/*.pkl
 *.pt
 *.bin
