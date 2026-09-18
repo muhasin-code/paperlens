@@ -129,6 +129,19 @@ validate-extraction-dataset:
 	python scripts/validate_extraction_dataset.py
 
 
+# ─── Kaggle Dataset Upload (Phase 3.2) ─────────────────────────────────────────────
+
+upload-extraction-dataset:
+	@echo "-> Installing kaggle CLI if not present..."
+	@pip install kaggle -q 2>/dev/null || true
+	@echo "-> Checking Kaggle API credentials..."
+	@test -f ~/.kaggle/kaggle.json || (echo "Error: ~/.kaggle/kaggle.json not found."; echo "Download kaggle.json from Kaggle account settings and place it at ~/.kaggle/kaggle.json"; exit 1)
+	@echo "-> Uploading extraction dataset to Kaggle..."
+	@echo "   Dataset ID: muhasin/paperlens-extraction"
+	cd data/extraction_dataset && kaggle datasets create -p . -u
+	@echo "-> Dataset upload complete."
+
+
 # ─── Development Server ───────────────────────────────────────────────────────────
 
 run-backend:
@@ -178,6 +191,7 @@ help:
 	@echo "  make build-extraction-dataset  Build extraction dataset (API annotation)"
 	@echo "  make build-extraction-dry      Dry run: annotate 5 examples, no writes"
 	@echo "  make validate-extraction-dataset Validate dataset integrity"
+	@echo "  make upload-extraction-dataset  Upload extraction_dataset to Kaggle as paperlens-extraction"
 	@echo " make run-backend		Start FastAPI dev server"
 	@echo " make run-frontend		Start React dev server"
 	@echo " make benchmark      		Run Ollama inference benchmarks (tokens/sec, TTFT, RAM)"
