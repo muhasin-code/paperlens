@@ -90,6 +90,11 @@ class Settings(BaseSettings):
     extraction_val_split: float = 0.1
     extraction_system_prompt: str | None = None
 
+    # ── HuggingFace Hub (Phase 3.2) ─────────────────────────────────────────────
+    hf_hub_model_id: str = ""
+    hf_token: str = ""
+    extraction_adapter_repo: str = ""
+
 
 @lru_cache
 def get_settings() -> Settings:
