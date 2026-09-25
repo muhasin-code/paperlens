@@ -24,8 +24,8 @@ class ExtractionOutput(BaseModel):
     )
 
     def to_json(self) -> str:
-        """Return JSON string with null fields excluded for cleaner output."""
-        return json.dumps(self.model_dump(exclude_none=True))
+        """Return JSON string with all fields included (null for missing)."""
+        return json.dumps(self.model_dump(exclude_none=False))  # Changed from True to False
 
     def __str__(self) -> str:
         return self.to_json()

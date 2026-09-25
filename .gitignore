@@ -20,6 +20,7 @@ credentials.json
 .vscode/
 
 # ML / data
+data/
 data/raw/
 data/processed/
 data/chroma/
