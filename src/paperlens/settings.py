@@ -90,6 +90,11 @@ class Settings(BaseSettings):
     extraction_val_split: float = 0.1
     extraction_system_prompt: str | None = None
 
+    # ── HuggingFace Hub (Phase 3.2) ─────────────────────────────────────────────
+    hf_hub_model_id: str = "muhasin-code/paperlens-qwen2.5-3b-extraction"
+    extraction_adapter_repo: str = "muhasin-code/paperlens-qwen2.5-3b-extraction"
+    hf_token: str = ""
+
 
 @lru_cache
 def get_settings() -> Settings:

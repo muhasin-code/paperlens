@@ -106,7 +106,7 @@ class TestChunkAnnotator:
 
 
 class TestExtractionOutput:
-    def test_to_json_excludes_none(self):
+    def test_to_json_includes_all_fields(self):
         from src.paperlens.extraction.models import ExtractionOutput
 
         output = ExtractionOutput(
@@ -120,10 +120,15 @@ class TestExtractionOutput:
         json_str = output.to_json()
         parsed = json.loads(json_str)
 
+        # All fields should be present (including null ones)
         assert "research_question" in parsed
         assert "key_finding" in parsed
-        assert "method" not in parsed
-        assert "datasets" not in parsed
+        assert "method" in parsed
+        assert parsed["method"] is None
+        assert "datasets" in parsed
+        assert parsed["datasets"] is None
+        assert "metrics" in parsed
+        assert parsed["metrics"] is None
 
     def test_all_fields_present(self):
         from src.paperlens.extraction.models import ExtractionOutput
