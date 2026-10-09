@@ -153,6 +153,19 @@ upload-extraction-dataset:
 	@echo "-> Dataset upload complete."
 
 
+# ─── Extraction Evaluation (Phase 3.3) ─────────────────────────────────────────────
+
+evaluate-extraction:
+	@echo "-> Running extraction model evaluation..."
+	@echo "   Comparing base model (Qwen/Qwen2.5-3B-Instruct) vs fine-tuned adapter"
+	@echo "   This may take 1-3 hours depending on inference method."
+	python scripts/evaluate_extraction.py
+
+evaluate-extraction-dry:
+	@echo "-> Dry run: evaluating first 10 examples..."
+	python scripts/evaluate_extraction.py --dry-run
+
+
 # ─── Development Server ───────────────────────────────────────────────────────────
 
 run-backend:
@@ -205,6 +218,8 @@ help:
 	@echo "  make convert-qasper      Convert allenai/qasper to extraction dataset format"
 	@echo "  make convert-qasper-dry  Dry run: show stats without writing files"
 	@echo "  make upload-extraction-dataset  Upload extraction_dataset to Kaggle as paperlens-extraction"
+	@echo "  make evaluate-extraction      Compare base vs fine-tuned extraction model"
+	@echo "  make evaluate-extraction-dry  Dry run: evaluate first 10 examples only"
 	@echo " make run-backend		Start FastAPI dev server"
 	@echo " make run-frontend		Start React dev server"
 	@echo " make benchmark      		Run Ollama inference benchmarks (tokens/sec, TTFT, RAM)"
