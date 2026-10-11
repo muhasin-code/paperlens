@@ -49,6 +49,18 @@ A QLoRA fine-tuned variant of `Qwen2.5-3B-Instruct` handles structured extractio
 classifies each incoming request and directs it to either the RAG path or the extraction
 path.
 
+### Query Router (Phase 3.4)
+
+A lightweight keyword-based classifier routes incoming queries to either the conversational RAG path or structured extraction path. The router uses fast string matching (<50ms CPU) against configurable keyword sets:
+
+**Structured extraction triggers:** "extract", "summarize method", "what datasets", "what metrics", "key finding", "research question", "methodology", "experimental setup", "results"
+
+**Conversational triggers:** "how does", "why does", "explain", "compare", "what is the difference", "overview"
+
+**Default:** conversational (safer fallback)
+
+The router returns confidence scores and matched keywords for debugging. Configuration is in `Settings` (`router_threshold`, `router_structured_keywords`, `router_conversational_keywords`).
+
 ### API Layer (Phase 1)
 
 FastAPI serves the `/query` endpoint (Phase 1 blocking; Phase 4 SSE streaming). Pydantic
@@ -66,12 +78,11 @@ every PR. A faithfulness score below 0.75 fails the build.
 ## Request Lifecycle (simplified)
 
 ```
-User query
-  → React UI (Phase 1)
-  → FastAPI /query
-  → QueryRouter
-       ├─ Conversational → HybridRetrieval (BM25 + semantic) → RRF → Reranker → Ollama → CitationValidator → SSEStream
-       └─ Structured     → FineTunedExtractor → JSONOutput → SSEStream
+Query (with mode parameter)
+  → React UI / FastAPI
+  → QueryRouter (classifies)
+        ├─ mode="conversational" OR (auto + conversational) → HybridRetrieval → RRF → Reranker → Ollama → CitationValidator → SSEStream
+        └─ mode="structured" OR (auto + structured) → ExtractionInference → JSONOutput → SSEStream
 ```
 
 ---
