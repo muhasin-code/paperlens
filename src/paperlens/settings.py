@@ -91,8 +91,8 @@ class Settings(BaseSettings):
     extraction_system_prompt: str | None = None
 
     # ── HuggingFace Hub (Phase 3.2) ─────────────────────────────────────────────
-    hf_hub_model_id: str = "muhasin-code/paperlens-qwen2.5-3b-extraction"
-    extraction_adapter_repo: str = "muhasin-code/paperlens-qwen2.5-3b-extraction"
+    hf_hub_model_id: str = "muhasin-code/paperlens-qwen2.5-3b-extraction-v3"
+    extraction_adapter_repo: str = "muhasin-code/paperlens-qwen2.5-3b-extraction-v3"
     hf_token: str = ""
 
 
