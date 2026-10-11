@@ -6,7 +6,9 @@ from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 
 from src.paperlens.api.rag import RAGService
-from src.paperlens.api.schemas import HealthResponse, QueryRequest, QueryResponse
+from src.paperlens.api.schemas import HealthResponse, QueryModeRequest, QueryRequest, QueryResponse
+from src.paperlens.extraction.inference import get_extraction_inference
+from src.paperlens.extraction.router import QueryRouter
 from src.paperlens.llm.base import LLMProvider
 from src.paperlens.settings import get_settings
 
@@ -31,38 +33,70 @@ def get_rag_service(request: Request) -> RAGService:
     "/query",
     response_model=QueryResponse,
     status_code=status.HTTP_200_OK,
-    summary="Query the PaperLens RAG system",
-    description="Submit a natural-language question. Returns a cited answer with source chunk references.",
+    summary="Query the PaperLens system (auto-routed)",
+    description="Submit a natural-language question. Uses router to select between conversational RAG and structured extraction.",
 )
-async def query_endpoint(request: QueryRequest, http_request: Request) -> QueryResponse:
-    """Handle POST /query — main RAG endpoint."""
-    service = get_rag_service(http_request)
-    try:
-        return await service.query(request)
-    except RuntimeError as exc:
-        logger.exception("RAG pipeline failed")
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
-    except Exception as exc:  # noqa: BLE001
-        logger.exception("Unexpected error in /query")
-        raise HTTPException(status_code=500, detail="Internal server error") from exc
+async def query_endpoint(request: QueryModeRequest, http_request: Request) -> QueryResponse:
+    """Handle POST /query — main endpoint with auto-routing."""
+    settings = get_settings()
+
+    if request.mode == "structured":
+        extraction_inference = get_extraction_inference(settings)
+        extraction_output = await extraction_inference.extract(request.query)
+
+        router = QueryRouter(settings)
+        decision = router.classify(request.query)
+
+        return QueryResponse(
+            mode="structured",
+            answer=None,
+            citations=None,
+            confidence=decision.confidence,
+            retrieval_time_ms=0.0,
+            generation_time_ms=0.0,
+            total_time_ms=0.0,
+            extraction=extraction_output.model_dump(exclude_none=False),
+            router_decision=decision.model_dump(),
+        )
+    else:
+        # Use existing RAG service for conversational/auto mode
+        service = get_rag_service(http_request)
+        # Create a compatible QueryRequest for RAGService
+        from src.paperlens.api.schemas import QueryRequest
+
+        rag_request = QueryRequest(query=request.query, top_k=request.top_k, model=request.model)
+
+        try:
+            return await service.query(rag_request)
+        except RuntimeError as exc:
+            logger.exception("RAG pipeline failed")
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+        except Exception as exc:
+            logger.exception("Unexpected error in /query")
+            raise HTTPException(status_code=500, detail="Internal server error") from exc
 
 
 @router.post(
     "/query/stream",
     summary="Query the PaperLens RAG system (SSE streaming)",
-    description="Submit a natural-language question. Returns Server-Sent Events with token-by-token response.",
+    description="Submit a natural-language question. Returns Server-Sent Events with token-by-token response. Only works in conversational mode.",
 )
-async def query_stream_endpoint(request: QueryRequest, http_request: Request):
+async def query_stream_endpoint(request: QueryModeRequest, http_request: Request):
     """Handle POST /query/stream — streaming RAG endpoint."""
+    if request.mode == "structured":
+        logger.warning("Streaming not supported for structured extraction mode")
+        return StreamingResponse(
+            iter([b"data: {'error': 'Streaming not available for structured extraction'}\n\n"]),
+            media_type="text/event-stream",
+        )
+
     service = get_rag_service(http_request)
     try:
+        rag_request = QueryRequest(query=request.query, top_k=request.top_k, model=request.model)
         return StreamingResponse(
-            service.query_stream(request),
+            service.query_stream(rag_request),
             media_type="text/event-stream",
-            headers={
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-            },
+            headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
         )
     except RuntimeError as exc:
         logger.exception("RAG pipeline failed")
@@ -70,6 +104,40 @@ async def query_stream_endpoint(request: QueryRequest, http_request: Request):
     except Exception as exc:
         logger.exception("Unexpected error in /query/stream")
         raise HTTPException(status_code=500, detail="Internal server error") from exc
+
+
+@router.post(
+    "/extract",
+    response_model=QueryResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Structured extraction from paper chunk",
+    description="Extract structured information (research_question, method, datasets, metrics, key_finding) from the query text.",
+)
+async def extract_endpoint(request: QueryModeRequest, http_request: Request) -> QueryResponse:
+    """Handle POST /extract — direct structured extraction endpoint."""
+    settings = get_settings()
+
+    try:
+        extraction_inference = get_extraction_inference(settings)
+        extraction_output = await extraction_inference.extract(request.query)
+
+        router = QueryRouter(settings)
+        decision = router.classify(request.query)
+
+        return QueryResponse(
+            mode="structured",
+            answer=None,
+            citations=None,
+            confidence=decision.confidence,
+            retrieval_time_ms=0.0,
+            generation_time_ms=0.0,
+            total_time_ms=0.0,
+            extraction=extraction_output.model_dump(exclude_none=False),
+            router_decision=decision.model_dump(),
+        )
+    except Exception as exc:
+        logger.exception("Extraction failed")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.get(
