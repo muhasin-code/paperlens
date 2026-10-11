@@ -73,7 +73,7 @@ class QueryRouter:
         total_keywords = structured_total + len(self.conversational_keywords)
         confidence = structured_count / structured_total if structured_total > 0 else 0.0
 
-        if confidence >= self.threshold and structured_count > conversational_count:
+        if confidence >= self.threshold and structured_count >= conversational_count:
             return RouterDecision(
                 mode="structured",
                 confidence=min(1.0, confidence),
@@ -82,9 +82,13 @@ class QueryRouter:
                 total_keywords=total_keywords,
             )
         else:
-            effective_confidence = (
-                conversational_count / total_keywords if total_keywords > 0 else 1.0
-            )
+            # For empty query (no matches), use 1.0 confidence since it's a clear fallback
+            if structured_count == 0 and conversational_count == 0:
+                effective_confidence = 1.0
+            else:
+                effective_confidence = (
+                    conversational_count / total_keywords if total_keywords > 0 else 1.0
+                )
             return RouterDecision(
                 mode="conversational",
                 confidence=min(1.0, effective_confidence),
