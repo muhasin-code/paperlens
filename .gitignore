@@ -31,6 +31,7 @@ data/*.pkl
 *.safetensors
 .cache/
 models/
+results/
 
 # OS
 .DS_Store
