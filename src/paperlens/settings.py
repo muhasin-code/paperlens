@@ -96,7 +96,7 @@ class Settings(BaseSettings):
     hf_token: str = ""
 
     # ── Extraction Inference (Phase 3.4) ─────────────────────────────────────────────
-    router_threshold: float = 0.5  # Minimum keyword match ratio for "structured" classification
+    router_threshold: float = 0.08  # Minimum keyword match ratio for "structured" classification (allows single keyword match at 1/12 ≈ 0.083)
     router_structured_keywords: str = "extract,summarize method,what datasets,what metrics,key finding,research question,methodology,experimental setup,results,extract structured,extract from,what are the"
     router_conversational_keywords: str = "how does,why does,explain,compare,what is the difference,what are,overview,tell me about,what is this about"
     extraction_inference_mode: str = "hf_api"  # options: hf_api, local_placeholder, kaggle
