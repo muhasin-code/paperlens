@@ -1,11 +1,22 @@
 #!/usr/bin/env python3
-"""Convert QASPER dataset to PaperLens extraction SFT format."""
+"""Convert QASPER dataset to PaperLens extraction SFT format.
+
+This script loads the allenai/qasper dataset from HuggingFace and converts it to the
+ExtractionExample SFT format used for QLoRA fine-tuning. It extracts sections matching
+'method', 'experiments', 'results', 'evaluation' from the full text and generates
+structured extraction examples WHERE LABELS ARE DERIVED FROM THE CHUNK TEXT to match
+the system prompt: 'Extract structured information from the following ML paper chunk'.
+
+Usage:
+    python scripts/convert_qasper.py [--limit N] [--output-dir PATH] [--val-split FRAC] [--dry-run]
+"""
 
 import argparse
 import json
 import random
 import re
 import sys
+from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -73,9 +84,9 @@ CITED_DATASETS = [
     "Gemini",
 ]
 
+# Metrics with word-boundary-safe matching (removed "acc", "F1" duplicate, "AP" kept but careful)
 CITED_METRICS = [
     "accuracy",
-    "acc",
     "accuracy@1",
     "top-1 accuracy",
     "top-5 accuracy",
@@ -117,9 +128,9 @@ CITED_METRICS = [
 
 
 def extract_section_text(full_text: str, section_names: list[str]) -> dict[str, str]:
+    """Extract text for specific sections from the QASPER full_text."""
     sections = {}
     for target in section_names:
-        # Simple case-insensitive search for section header
         pattern = rf"(?i){re.escape(target)}[:\s]\n?(.*?)(?=(?:\n[A-Z][a-z]+:)|$)"
         match = re.search(pattern, full_text, re.DOTALL)
         if match:
@@ -130,6 +141,7 @@ def extract_section_text(full_text: str, section_names: list[str]) -> dict[str, 
 
 
 def find_datasets_in_text(text: str) -> list[str]:
+    """Find dataset mentions in text (case-insensitive substring)."""
     found = []
     text_lower = text.lower()
     for dataset in CITED_DATASETS:
@@ -139,45 +151,92 @@ def find_datasets_in_text(text: str) -> list[str]:
 
 
 def find_metrics_in_text(text: str) -> list[str]:
+    """Find metric mentions using word boundaries for single tokens, phrase for multi-word.
+
+    Only matches metrics that appear as standalone tokens to avoid false positives
+    (e.g., "AR" in "area", "are" should not match).
+    """
     found = []
     text_lower = text.lower()
     for metric in CITED_METRICS:
-        if metric.lower() in text_lower:
-            found.append(metric)
+        metric_lower = metric.lower()
+        if " " not in metric_lower:
+            # Single token: require word boundaries AND not part of longer word
+            # Use negative lookahead/lookbehind for alphanumeric
+            pattern = rf"(?<![a-z0-9]){re.escape(metric_lower)}(?![a-z0-9])"
+            if re.search(pattern, text_lower):
+                found.append(metric)
+        else:
+            # Multi-word: phrase search with word boundaries at edges
+            pattern = rf"(?<![a-z0-9]){re.escape(metric_lower)}(?![a-z0-9])"
+            if re.search(pattern, text_lower):
+                found.append(metric)
     return list(set(found))
 
 
-def build_qas_list(qas_dict: dict) -> list[dict]:
-    """Convert QASPER qas dict (parallel lists) to list of QA dicts."""
-    n = len(qas_dict.get("question", []))
-    result = []
-    for i in range(n):
-        result.append(
-            {
-                "question": qas_dict.get("question", [""])[i]
-                if i < len(qas_dict.get("question", []))
-                else "",
-                "answers": qas_dict.get("answers", [{}])[i]
-                if i < len(qas_dict.get("answers", []))
-                else {},
-            }
-        )
-    return result
+def infer_research_question(title: str, abstract: str, section_label: str, chunk_text: str) -> str:
+    """Infer a research question from paper metadata and section."""
+    section_questions = {
+        "method": f"What method does the paper '{title}' propose?",
+        "experiments": f"What experimental setup does the paper '{title}' use?",
+        "results": f"What are the main results of the paper '{title}'?",
+        "evaluation": f"How does the paper '{title}' evaluate its method?",
+    }
+
+    base_q = section_questions.get(section_label, f"What does the paper '{title}' address?")
+
+    if abstract:
+        first_sentence = abstract.split(".")[0].strip()
+        if len(first_sentence) > 20:
+            return f"{base_q} Context: {first_sentence}"
+
+    return base_q
 
 
-def extract_answer_text(answers: dict) -> str | None:
-    """Extract answer text from QASPER answers dict."""
-    if not isinstance(answers, dict):
+def extract_key_finding_from_chunk(chunk_text: str) -> str | None:
+    """Extract a key finding from results/evaluation chunk text."""
+    if not chunk_text or len(chunk_text.strip()) < 50:
         return None
-    answer_list = answers.get("answer", [])
-    for ans in answer_list:
-        if isinstance(ans, dict):
-            # Use free_form_answer field
-            text = ans.get("free_form_answer", "")
-        else:
-            text = str(ans)
-        if text and text.strip():
-            return text.strip()
+
+    finding_patterns = [
+        r"(?:we (?:find|show|demonstrate|observe|achieve|report|see|get|reach))\s+([^.]{20,200})",
+        r"(?:our (?:method|model|approach|results?))\s+(?:achieves?|shows?|reaches?|gets?|obtains?)\s+([^.]{20,200})",
+        r"(?:the (?:results?|findings?|performance|accuracy|score))\s+(?:shows?|indicate?|suggest?|is|are)\s+([^.]{20,200})",
+        r"(?:outperform|improv|beat|surpass|exceed)\s+([^.]{20,200})",
+        r"(?:achieve[sd]?|reach[ed]?|obtain[ed]?)\s+(?:an?\s+)?([\d.]+(?:\s*[%%]|\s+points?))",
+    ]
+
+    for pattern in finding_patterns:
+        match = re.search(pattern, chunk_text, re.IGNORECASE)
+        if match:
+            finding = match.group(1).strip()
+            if len(finding) > 15:
+                return finding[:500]
+
+    # Fallback: first substantial sentence with numbers/metrics
+    sentences = re.split(r"[.!?]", chunk_text)
+    for sent in sentences:
+        sent = sent.strip()
+        if (
+            len(sent) > 30
+            and any(c.isdigit() for c in sent)
+            and any(
+                w in sent.lower()
+                for w in [
+                    "acc",
+                    "f1",
+                    "score",
+                    "performance",
+                    "result",
+                    "improv",
+                    "achiev",
+                    "outperform",
+                    "beat",
+                ]
+            )
+        ):
+            return sent[:500]
+
     return None
 
 
@@ -186,38 +245,41 @@ def generate_extraction_example(
     chunk_text: str,
     section_label: str,
     system_prompt: str,
+    paper_idx: int,
 ) -> ExtractionExample | None:
-    qas_dict = paper.get("qas", {})
-    qas_list = build_qas_list(qas_dict)
+    """Generate an ExtractionExample from QASPER paper and section text."""
 
-    research_question = None
-    key_finding = None
+    # Get paper ID - try multiple fields, fallback to index
+    paper_id = (
+        paper.get("paper_id")
+        or paper.get("id")
+        or paper.get("paper_id_str")
+        or f"paper_{paper_idx}"
+    )
 
-    for qa in qas_list:
-        question = qa.get("question", "")
-        answers = qa.get("answers", {})
+    title = paper.get("title", "")
+    abstract = paper.get("abstract", "")
 
-        if not research_question and question:
-            research_question = question
+    # Build user prompt with metadata(so research_question is answerable)
+    user_content = (
+        f"Paper Title: {title}\n\n"
+        f"Paper Abstract: {abstract}\n\n"
+        f"Section: {section_label}\n\n"
+        f"Extract structured information from the ML paper chunk:\n\n{chunk_text}"
+    )
 
-        ans_text = extract_answer_text(answers)
-        if ans_text and not key_finding:
-            key_finding = ans_text
-            if len(key_finding) > 500:
-                key_finding = key_finding[:500]
-
-        if research_question and key_finding:
-            break
-
-    if not research_question:
-        research_question = "Extract structured information from this ML paper section."
+    research_question = infer_research_question(title, abstract, section_label, chunk_text)
 
     method_text = None
+    if section_label == "method":
+        method_text = chunk_text[:500] if chunk_text else None
+
     datasets_list = find_datasets_in_text(chunk_text)
     metrics_list = find_metrics_in_text(chunk_text)
 
-    if section_label == "method":
-        method_text = chunk_text[:500] if chunk_text else None
+    key_finding = None
+    if section_label in ("results", "evaluation"):
+        key_finding = extract_key_finding_from_chunk(chunk_text)
 
     output = ExtractionOutput(
         research_question=research_question,
@@ -228,10 +290,10 @@ def generate_extraction_example(
     )
 
     return ExtractionExample(
-        chunk_id=f"{paper.get('id', 'unknown')}_{section_label}",
-        arxiv_id=paper.get("id", "unknown"),
+        chunk_id=f"{paper_id}_{section_label}",
+        arxiv_id=paper_id,
         section_label=section_label,
-        input_text=chunk_text,
+        input_text=user_content,  # Store full prompt for reference
         output=output,
         system_prompt=system_prompt,
     )
@@ -243,6 +305,7 @@ def convert_qasper(
     val_split: float = 0.1,
     dry_run: bool = False,
 ) -> dict:
+    """Convert QASPER dataset to extraction format."""
     from datasets import load_dataset
 
     print("Loading allenai/qasper dataset...")
@@ -262,7 +325,7 @@ def convert_qasper(
     examples: list[ExtractionExample] = []
 
     skipped_no_full_text = 0
-    skipped_no_answer = 0
+    skipped_short_chunk = 0
 
     for i, paper in enumerate(dataset):
         if i % 100 == 0 and i > 0:
@@ -275,19 +338,6 @@ def convert_qasper(
 
         title = paper.get("title", "")
         abstract = paper.get("abstract", "")
-
-        qas_dict = paper.get("qas", {})
-        qas_list = build_qas_list(qas_dict)
-        answered_qas = [
-            qa
-            for qa in qas_list
-            if qa.get("answers", {}).get("answer", [""])[0]
-            if qa.get("answers", {}).get("answer")
-        ]
-
-        if not answered_qas:
-            skipped_no_answer += 1
-            continue
 
         full_paper_text = f"Title: {title}\n\nAbstract: {abstract}\n\n"
         if isinstance(full_text, dict):
@@ -309,13 +359,24 @@ def convert_qasper(
         for section_name in EXTRACTABLE_SECTIONS:
             section_text = extract_section_text(full_paper_text, [section_name]).get(section_name)
             if not section_text or len(section_text.strip()) < 100:
+                skipped_short_chunk += 1
                 continue
+
+            if section_name == "method" and len(section_text.strip()) < 200:
+                skipped_short_chunk += 1
+                continue
+
+            if section_name in ("results", "evaluation"):
+                if not re.search(r"\d", section_text):
+                    skipped_short_chunk += 1
+                    continue
 
             example = generate_extraction_example(
                 paper=paper,
                 chunk_text=section_text,
                 section_label=section_name,
                 system_prompt=DEFAULT_SYSTEM_PROMPT,
+                paper_idx=i,
             )
 
             if example:
@@ -327,10 +388,21 @@ def convert_qasper(
                 except json.JSONDecodeError:
                     print(f"Warning: Generated invalid JSONL for {example.chunk_id}")
 
+    # Deduplicate by chunk_id (now unique due to paper_idx fallback)
+    seen_chunk_ids = set()
+    unique_examples = []
+    for ex in examples:
+        if ex.chunk_id not in seen_chunk_ids:
+            seen_chunk_ids.add(ex.chunk_id)
+            unique_examples.append(ex)
+        else:
+            print(f"Warning: Duplicate chunk_id {ex.chunk_id}, skipping")
+    examples = unique_examples
+
     print("\nConversion complete:")
     print(f"  Total examples generated: {len(examples)}")
-    print(f"  Skipped (no answered questions): {skipped_no_answer}")
     print(f"  Skipped (no full_text): {skipped_no_full_text}")
+    print(f"  Skipped (chunk too short or no numbers): {skipped_short_chunk}")
 
     if len(examples) < 30:
         print("ERROR: Generated too few examples. Check the QASPER schema and extraction logic.")
@@ -341,10 +413,26 @@ def convert_qasper(
             "dry_run": dry_run,
         }
 
-    random.shuffle(examples)
-    val_size = max(1, int(len(examples) * val_split))
-    val_examples = examples[:val_size]
-    train_examples = examples[val_size:]
+    paper_to_examples = defaultdict(list)
+    for ex in examples:
+        paper_to_examples[ex.arxiv_id].append(ex)
+
+    paper_ids = list(paper_to_examples.keys())
+    random.shuffle(paper_ids)
+
+    val_paper_count = max(1, int(len(paper_ids) * val_split))
+    val_paper_ids = set(paper_ids[:val_paper_count])
+
+    val_examples = []
+    train_examples = []
+    for pid, exs in paper_to_examples.items():
+        if pid in val_paper_ids:
+            val_examples.extend(exs)
+        else:
+            train_examples.extend(exs)
+
+    print(f"  Train papers: {len(paper_ids) - val_paper_count} ({len(train_examples)} examples)")
+    print(f"  Val papers: {val_paper_count} ({len(val_examples)} examples)")
 
     print(f"  Train examples: {len(train_examples)}")
     print(f"  Val examples: {len(val_examples)}")
