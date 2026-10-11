@@ -54,7 +54,7 @@ class ExtractionExample(BaseModel):
         return {
             "messages": [
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": user_content},
+                {"role": "user", "content": user_content},  # Now includes metadata
                 {"role": "assistant", "content": assistant_content},
             ],
             "metadata": {
