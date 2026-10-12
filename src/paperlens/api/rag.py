@@ -148,6 +148,7 @@ class RAGService:
 
         if not results:
             return QueryResponse(
+                mode="conversational",
                 answer="I cannot answer from the provided sources.",
                 citations=[],
                 confidence=0.0,
@@ -168,6 +169,7 @@ class RAGService:
         # Check for refusal response
         if self._prompt_template.refusal_message in gen_result.text:
             return QueryResponse(
+                mode="conversational",
                 answer=self._prompt_template.refusal_message,
                 citations=[],
                 confidence=0.0,
@@ -187,6 +189,7 @@ class RAGService:
             confidence = 0.0
 
         return QueryResponse(
+            mode="conversational",
             answer=gen_result.text.strip(),
             citations=citations,
             confidence=confidence,
