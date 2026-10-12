@@ -65,6 +65,7 @@ class Settings(BaseSettings):
     llm_api_base_url: str = ""  # used when LLM_PROVIDER=openai_compat
     llm_api_key: str = ""  # used when LLM_PROVIDER=openai_compat
     llm_model: str = ""  # overrides OLLAMA_MODEL when set
+    llm_fallback_model: str = ""  # fallback model for openai_compat provider
 
     # ── Prompts (Phase 2) ───────────────────────────────────────────────────
     prompts_dir: Path = Field(default=Path("./configs/prompts"))
@@ -91,9 +92,17 @@ class Settings(BaseSettings):
     extraction_system_prompt: str | None = None
 
     # ── HuggingFace Hub (Phase 3.2) ─────────────────────────────────────────────
-    hf_hub_model_id: str = "muhasin-code/paperlens-qwen2.5-3b-extraction"
-    extraction_adapter_repo: str = "muhasin-code/paperlens-qwen2.5-3b-extraction"
+    hf_hub_model_id: str = "muhasin-code/paperlens-qwen2.5-3b-extraction-v3"
+    extraction_adapter_repo: str = "muhasin-code/paperlens-qwen2.5-3b-extraction-v3"
     hf_token: str = ""
+
+    # ── Extraction Inference (Phase 3.4) ─────────────────────────────────────────────
+    router_threshold: float = 0.08  # Minimum keyword match ratio for "structured" classification (allows single keyword match at 1/12 ≈ 0.083)
+    router_structured_keywords: str = "extract,summarize method,what datasets,what metrics,key finding,research question,methodology,experimental setup,results,extract structured,extract from,what are the"
+    router_conversational_keywords: str = "how does,why does,explain,compare,what is the difference,what are,overview,tell me about,what is this about"
+    extraction_inference_mode: str = "hf_api"  # options: hf_api, local_placeholder, kaggle
+    extraction_max_new_tokens: int = 256
+    extraction_temperature: float = 0.1
 
 
 @lru_cache

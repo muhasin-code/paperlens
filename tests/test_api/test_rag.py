@@ -20,6 +20,9 @@ def settings(tmp_path) -> Settings:
         ollama_base_url="http://localhost:11434",
         ollama_model="phi4-mini",
         retrieval_top_k=5,
+        llm_provider="openai_compat",
+        llm_model="openai/gpt-oss-120b",
+        llm_fallback_model="qwen/qwen3-8b",
     )
 
 
@@ -132,7 +135,7 @@ class TestRAGService:
         assert mock_llm_provider.generate.call_count == 2
         # Second call should use fallback model
         call_args = mock_llm_provider.generate.call_args_list[1]
-        assert call_args.kwargs["model"] == "llama3.2:1b"
+        assert call_args.kwargs["model"] == "qwen/qwen3-8b"
 
     @pytest.mark.asyncio
     async def test_health_check_reports_chroma_and_ollama(

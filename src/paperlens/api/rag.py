@@ -20,9 +20,6 @@ from src.paperlens.settings import Settings
 
 logger = logging.getLogger("paperlens.api")
 
-# Fallback model if primary fails (CPU-friendly, already small)
-FALLBACK_MODEL = "llama3.2:1b"
-
 
 @dataclass
 class GenerationResult:
@@ -130,7 +127,7 @@ class RAGService:
 
         self.llm_provider = llm_provider
         self.primary_model = settings.llm_model or settings.ollama_model
-        self.fallback_model = FALLBACK_MODEL
+        self.fallback_model = settings.llm_fallback_model or self.primary_model
         # Health check cache (TTL 10 seconds)
         self._health_cache: tuple[float, dict] | None = None
         self._health_ttl = 10.0
@@ -144,10 +141,13 @@ class RAGService:
         results: list[RetrievalResult] = self.retriever.search(
             query=request.query, top_k=request.top_k
         )
+        if self.settings.llm_provider == "openai_compat":
+            results = results[:5]  # Top 5 chunks = ~3000 tokens, fits in Groq limits
         retrieval_time_ms = (time.perf_counter() - retrieval_start) * 1000
 
         if not results:
             return QueryResponse(
+                mode="conversational",
                 answer="I cannot answer from the provided sources.",
                 citations=[],
                 confidence=0.0,
@@ -168,6 +168,7 @@ class RAGService:
         # Check for refusal response
         if self._prompt_template.refusal_message in gen_result.text:
             return QueryResponse(
+                mode="conversational",
                 answer=self._prompt_template.refusal_message,
                 citations=[],
                 confidence=0.0,
@@ -187,6 +188,7 @@ class RAGService:
             confidence = 0.0
 
         return QueryResponse(
+            mode="conversational",
             answer=gen_result.text.strip(),
             citations=citations,
             confidence=confidence,

@@ -27,6 +27,7 @@ def mock_rag_service():
 class TestQueryEndpoint:
     def test_query_success_returns_cited_answer(self, client, mock_rag_service):
         mock_rag_service.query.return_value = QueryResponse(
+            mode="conversational",
             answer="Test answer [2401.00001v1_chunk_0001].",
             citations=[
                 {
@@ -61,6 +62,7 @@ class TestQueryEndpoint:
 
     def test_query_validates_top_k_bounds(self, client, mock_rag_service):
         mock_rag_service.query.return_value = QueryResponse(
+            mode="conversational",
             answer="x",
             citations=[],
             confidence=0.0,

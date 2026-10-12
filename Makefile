@@ -166,6 +166,17 @@ evaluate-extraction-dry:
 	python scripts/evaluate_extraction.py --dry-run
 
 
+# ─── Extraction Inference (Phase 3.4) ──────────────────────────────────────────────
+
+test-router:
+	@echo "-> Running router unit tests..."
+	pytest tests/test_extraction/test_router.py -v
+
+test-extraction-inference:
+	@echo "-> Running extraction inference tests..."
+	pytest tests/test_extraction/test_inference.py -v
+
+
 # ─── Development Server ───────────────────────────────────────────────────────────
 
 run-backend:
@@ -220,6 +231,8 @@ help:
 	@echo "  make upload-extraction-dataset  Upload extraction_dataset to Kaggle as paperlens-extraction"
 	@echo "  make evaluate-extraction      Compare base vs fine-tuned extraction model"
 	@echo "  make evaluate-extraction-dry  Dry run: evaluate first 10 examples only"
+	@echo "  make test-router                  Run router classification unit tests"
+	@echo "  make test-extraction-inference    Run extraction inference unit tests"
 	@echo " make run-backend		Start FastAPI dev server"
 	@echo " make run-frontend		Start React dev server"
 	@echo " make benchmark      		Run Ollama inference benchmarks (tokens/sec, TTFT, RAM)"

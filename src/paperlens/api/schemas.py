@@ -1,5 +1,7 @@
 """Pydantic request/response schemas for the PaperLens API."""
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -20,6 +22,27 @@ class QueryRequest(BaseModel):
     )
     model: str | None = Field(
         default=None, description="Override default Ollama model (settings.ollama_model)."
+    )
+
+
+class QueryModeRequest(BaseModel):
+    """Request payload for the /query endpoint with routing mode."""
+
+    query: str = Field(
+        ..., min_length=1, max_length=2000, description="Natural-language question (1–2000 chars)"
+    )
+    top_k: int | None = Field(
+        default=None,
+        ge=1,
+        le=20,
+        description="Override retrieval top-k (settings.retrieval_top_k).",
+    )
+    model: str | None = Field(
+        default=None, description="Override default Ollama model (settings.ollama_model)."
+    )
+    mode: Literal["auto", "conversational", "structured"] = Field(
+        default="auto",
+        description="Query routing mode: 'auto' (router decides), 'conversational' (RAG), 'structured' (extraction)",
     )
 
 
@@ -44,21 +67,36 @@ class Citation(BaseModel):
 
 
 class QueryResponse(BaseModel):
-    """Response payload for the /query endpoint."""
+    """Response payload for the /query endpoint.
 
-    answer: str = Field(..., description="Generated answer text.")
-    citations: list[Citation] = Field(..., description="Source chunks used for the answer.")
-    confidence: float = Field(
-        ...,
+    When mode='structured', answer/citations are None and extraction contains the JSON output.
+    When mode='conversational', extraction is None and answer/citations are populated.
+    """
+
+    mode: str = Field(..., description="Query routing mode used ('conversational' or 'structured')")
+    answer: str | None = Field(
+        default=None, description="Generated answer text (conversational mode)"
+    )
+    citations: list[Citation] | None = Field(
+        default=None, description="Source chunks used for the answer (conversational mode)"
+    )
+    confidence: float | None = Field(
+        default=None,
         ge=0.0,
         le=1.0,
         description="Overall confidence in the answer (heuristic: mean of top-3 retrieval scores, capped).",
     )
-    retrieval_time_ms: float = Field(
-        ..., description="Time spent in semantic retrieval (embed + search)."
+    retrieval_time_ms: float | None = Field(
+        default=None, description="Time spent in semantic retrieval (embed + search)."
     )
-    generation_time_ms: float = Field(..., description="Time spent in Ollama LLM generation.")
-    total_time_ms: float = Field(..., description="End-to-end latency.")
+    generation_time_ms: float | None = Field(
+        default=None, description="Time spent in Ollama LLM generation."
+    )
+    total_time_ms: float | None = Field(default=None, description="End-to-end latency.")
+    extraction: dict | None = Field(
+        default=None, description="Structured extraction output (JSON with 5 fields)"
+    )
+    router_decision: dict | None = Field(default=None, description="Router classification details")
 
 
 class HealthResponse(BaseModel):

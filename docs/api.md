@@ -199,6 +199,100 @@ curl http://localhost:8000/
 
 ---
 
+### Router Decision Examples (Phase 3.4)
+
+The query router classifies incoming requests as either **conversational** (RAG) or **structured** (extraction). Use the `mode` parameter to override auto-selection.
+
+| Query | Auto Mode Result | Mode Override |
+|-------|------------------|---------------|
+| "What datasets were used in this paper?" | `structured` | `"structured"` |
+| "What method did the authors propose?" | `structured` | `"structured"` |
+| "What are the key findings?" | `structured` | `"structured"` |
+| "How does attention work?" | `conversational` | `"conversational"` |
+| "Explain the transformer architecture" | `conversational` | `"conversational"`, `"auto"` |
+| "What is the difference between BERT and GPT?" | `conversational` | `"conversational"` |
+| "Summarize the experimental setup" | `structured` | `"structured"` |
+| "What metrics were reported?" | `structured` | `"structured"` |
+
+#### Explicit Structured Extraction
+
+```bash
+```
+
+
+
+# Force structured extraction mode
+
+curl -s -X POST [http://localhost:8000/query](http://localhost:8000/query)
+  -H "Content-Type: application/json"
+  -d '{"query": "What datasets were used?", "mode": "structured"}' | jq .
+
+```
+
+#### Response (Structured Mode)
+
+```json
+{
+  "mode": "structured",
+  "answer": null,
+  "citations": null,
+  "confidence": 0.85,
+  "retrieval_time_ms": 0.0,
+  "generation_time_ms": 120.5,
+  "total_time_ms": 150.2,
+  "extraction": {
+    "research_question": "How to improve image classification accuracy?",
+    "method": "We combine self-supervised pre-training with knowledge distillation...",
+    "datasets": ["ImageNet", "CIFAR-100"],
+    "metrics": ["accuracy", "top-5 accuracy"],
+    "key_finding": "Our method achieves 3.2% improvement on ImageNet."
+  },
+  "router_decision": {
+    "mode": "structured",
+    "confidence": 0.85,
+    "reasoning": "Matched structured extraction keywords: 'what datasets', 'what metrics'",
+    "matched_keywords": ["what datasets", "what metrics"],
+    "total_keywords": 35
+  }
+}
+```
+
+#### Explicit Conversational Mode
+
+```bash
+
+```
+
+
+
+# Force conversational RAG mode
+
+curl -s -X POST [http://localhost:8000/query](http://localhost:8000/query)
+  -H "Content-Type: application/json"
+  -d '{"query": "What is LoRA?", "mode": "conversational", "top_k": 5}' | jq .
+
+```
+
+---
+
+## Source Files (Updated)
+
+| File | Purpose |
+|---|---|
+| `src/paperlens/main.py` | FastAPI app factory, lifespan (load retrieval + extraction resources) |
+| `src/paperlens/api/routes.py` | Route handlers (`/query`, `/query/stream`, `/extract`) |
+| `src/paperlens/api/schemas.py` | Pydantic request/response models |
+| `src/paperlens/api/rag.py` | `RAGService`: retrieval → context → Ollama → citations |
+| `src/paperlens/rag/router_service.py` | `RouterService`: routes to RAG or extraction based on query |
+| `src/paperlens/extraction/router.py` | `QueryRouter`: keyword-based classification |
+| `src/paperlens/extraction/inference.py` | `ExtractionInference`: fine-tuned model wrapper |
+| `src/paperlens/extraction/models.py` | `ExtractionOutput`: 5-field JSON schema |
+| `src/paperlens/embedding/retriever.py` | `SemanticRetriever` |
+| `src/paperlens/embedding/embedder.py` | `EmbeddingModel` |
+| `scripts/query.py` | CLI smoke-test client |
+
+---
+
 ## Running the API Locally
 
 ```bash
