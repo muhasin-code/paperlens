@@ -65,6 +65,7 @@ class Settings(BaseSettings):
     llm_api_base_url: str = ""  # used when LLM_PROVIDER=openai_compat
     llm_api_key: str = ""  # used when LLM_PROVIDER=openai_compat
     llm_model: str = ""  # overrides OLLAMA_MODEL when set
+    llm_fallback_model: str = ""  # fallback model for openai_compat provider
 
     # ── Prompts (Phase 2) ───────────────────────────────────────────────────
     prompts_dir: Path = Field(default=Path("./configs/prompts"))

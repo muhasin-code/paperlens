@@ -74,19 +74,25 @@ class QueryResponse(BaseModel):
     """
 
     mode: str = Field(..., description="Query routing mode used ('conversational' or 'structured')")
-    answer: str = Field(..., description="Generated answer text.")
-    citations: list[Citation] = Field(..., description="Source chunks used for the answer.")
-    confidence: float = Field(
-        ...,
+    answer: str | None = Field(
+        default=None, description="Generated answer text (conversational mode)"
+    )
+    citations: list[Citation] | None = Field(
+        default=None, description="Source chunks used for the answer (conversational mode)"
+    )
+    confidence: float | None = Field(
+        default=None,
         ge=0.0,
         le=1.0,
         description="Overall confidence in the answer (heuristic: mean of top-3 retrieval scores, capped).",
     )
-    retrieval_time_ms: float = Field(
-        ..., description="Time spent in semantic retrieval (embed + search)."
+    retrieval_time_ms: float | None = Field(
+        default=None, description="Time spent in semantic retrieval (embed + search)."
     )
-    generation_time_ms: float = Field(..., description="Time spent in Ollama LLM generation.")
-    total_time_ms: float = Field(..., description="End-to-end latency.")
+    generation_time_ms: float | None = Field(
+        default=None, description="Time spent in Ollama LLM generation."
+    )
+    total_time_ms: float | None = Field(default=None, description="End-to-end latency.")
     extraction: dict | None = Field(
         default=None, description="Structured extraction output (JSON with 5 fields)"
     )

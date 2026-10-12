@@ -41,6 +41,8 @@ async def lifespan(app: FastAPI):
     from src.paperlens.api.rag import _get_embedding_model
 
     embedding_model = _get_embedding_model(settings)
+    # Force model to load so dimension is set
+    embedding_model._get_model()
     app.state.embedding_model = embedding_model
     logger.info(
         "Embedding model loaded (dim=%d, device=%s)",
