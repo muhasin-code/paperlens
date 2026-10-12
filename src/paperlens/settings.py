@@ -72,6 +72,7 @@ class Settings(BaseSettings):
     prompt_version: str = "v1"
 
     # ── Langfuse (Phase 4) ──────────────────────────────────────────────────
+    langfuse_enabled: bool = True
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""
     langfuse_host: str = "http://localhost:3000"
