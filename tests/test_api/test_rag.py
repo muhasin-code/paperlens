@@ -20,6 +20,9 @@ def settings(tmp_path) -> Settings:
         ollama_base_url="http://localhost:11434",
         ollama_model="phi4-mini",
         retrieval_top_k=5,
+        llm_provider="openai_compat",
+        llm_model="openai/gpt-oss-120b",
+        llm_fallback_model="qwen/qwen3-8b",
     )
 
 
