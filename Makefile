@@ -196,6 +196,27 @@ benchmark:
 	python scripts/benchmark_ollama.py
 
 
+# ─── Langfuse Observability (Milestone 4.1) ─────────────────────────────────────
+
+langfuse-up:
+	@echo "-> Starting Langfuse observability stack..."
+	docker compose up -d langfuse postgres clickhouse redis minio
+	@echo "   UI: http://localhost:3000   (admin@paperlens.local / paperlens)"
+	@echo "   Run 'make langfuse-logs' to watch logs."
+
+langfuse-down:
+	@echo "-> Stopping Langfuse stack..."
+	docker compose down
+
+langfuse-logs:
+	@echo "-> Tailing Langfuse logs (Ctrl+C to exit)..."
+	docker compose logs -f langfuse
+
+test-observability:
+	@echo "-> Running observability unit tests..."
+	pytest tests/test_observability/ -v
+
+
 # ─── Cleanup ──────────────────────────────────────────────────────────────────────
 
 clean:
@@ -236,6 +257,10 @@ help:
 	@echo " make run-backend		Start FastAPI dev server"
 	@echo " make run-frontend		Start React dev server"
 	@echo " make benchmark      		Run Ollama inference benchmarks (tokens/sec, TTFT, RAM)"
+	@echo "  make langfuse-up                 Start Langfuse stack (UI + DBs)"
+	@echo "  make langfuse-down               Stop Langfuse stack"
+	@echo "  make langfuse-logs               Tail Langfuse logs"
+	@echo "  make test-observability          Run observability unit tests"
 	@echo " make clean			Remove __pycache__, .pyc, pytest and coverage artifacts"
 	@echo " make ingest			Run full arXiv ingestion pipeline"
 	@echo " make ingest-dry			Preview what would be ingested (no downloads)"
