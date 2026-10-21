@@ -15,6 +15,13 @@ from src.paperlens.embedding.embedder import EmbeddingModel
 from src.paperlens.embedding.retriever import RetrievalResult, SemanticRetriever
 from src.paperlens.embedding.vector_store import VectorStore
 from src.paperlens.llm.base import LLMProvider
+from src.paperlens.observability.langfuse_client import get_langfuse_client
+from src.paperlens.observability.metrics import (
+    track_citation,
+    track_confidence,
+    track_latency,
+    track_tokens,
+)
 from src.paperlens.retrieval.hybrid import HybridRetriever
 from src.paperlens.settings import Settings
 
@@ -42,6 +49,17 @@ def _get_embedding_model(settings: Settings) -> EmbeddingModel:
 
         _embedding_model_cache = EmbeddingModel(settings)
     return _embedding_model_cache
+
+
+# Module-level singleton for Langfuse Observablity
+_observer = None
+
+
+def _get_observer():
+    global _observer
+    if _observer is None:
+        _observer = get_langfuse_client()
+    return _observer
 
 
 class LLMOutput(BaseModel):
@@ -135,67 +153,104 @@ class RAGService:
     async def query(self, request: QueryRequest) -> QueryResponse:
         """Execute the full RAG pipeline for a single query."""
         total_start = time.perf_counter()
+        observer = _get_observer()
 
-        # 1) Retrieval (Hybrid RRF only - reranker disabled per M2.5 benchmark)
-        retrieval_start = time.perf_counter()
-        results: list[RetrievalResult] = self.retriever.search(
-            query=request.query, top_k=request.top_k
-        )
-        if self.settings.llm_provider == "openai_compat":
-            results = results[:5]  # Top 5 chunks = ~3000 tokens, fits in Groq limits
-        retrieval_time_ms = (time.perf_counter() - retrieval_start) * 1000
+        # Record start for timeout/observability
+        is_cited = False
+        try:
+            with observer.trace(
+                "rag.query",
+                input=request.query,
+                user_id=None,  # Could add request.client.host if desired
+                metadata={"query_length": len(request.query)},
+            ) as _:
+                # 1) Retrieval (Hybrid RRF only - reranker disabled per M2.5 benchmark)
+                retrieval_start = time.perf_counter()
+                results: list[RetrievalResult] = self.retriever.search(
+                    query=request.query, top_k=request.top_k
+                )
+                retrieval_time_ms = (time.perf_counter() - retrieval_start) * 1000
+                track_latency("retrieval", retrieval_time_ms)
 
-        if not results:
-            return QueryResponse(
-                mode="conversational",
-                answer="I cannot answer from the provided sources.",
-                citations=[],
-                confidence=0.0,
-                retrieval_time_ms=retrieval_time_ms,
-                generation_time_ms=0.0,
-                total_time_ms=(time.perf_counter() - total_start) * 1000,
-            )
+                if not results:
+                    resp = QueryResponse(
+                        mode="conversational",
+                        answer="I cannot answer from the provided sources.",
+                        citations=[],
+                        confidence=0.0,
+                        retrieval_time_ms=retrieval_time_ms,
+                        generation_time_ms=0.0,
+                        total_time_ms=(time.perf_counter() - total_start) * 1000,
+                    )
+                    track_citation(False)
+                    return resp
 
-        # 2) Context assembly
-        context = self._assemble_context(results)
+                # 2) Context assembly
+                context = self._assemble_context(results)
 
-        # 3) LLM generation (with fallback)
-        generation_start = time.perf_counter()
-        gen_result = await self._generate_with_fallback(request.query, context, request.model)
-        generation_time_ms = (time.perf_counter() - generation_start) * 1000
-        total_time_ms = (time.perf_counter() - total_start) * 1000
+                # 3) LLM generation (with fallback)
+                generation_start = time.perf_counter()
+                gen_result = await self._generate_with_fallback(
+                    request.query, context, request.model
+                )
+                generation_time_ms = (time.perf_counter() - generation_start) * 1000
+                track_latency("generation", generation_time_ms)
+                track_tokens(
+                    self.primary_model, len(context.split()) + len(gen_result.text.split())
+                )
 
-        # Check for refusal response
-        if self._prompt_template.refusal_message in gen_result.text:
-            return QueryResponse(
-                mode="conversational",
-                answer=self._prompt_template.refusal_message,
-                citations=[],
-                confidence=0.0,
-                retrieval_time_ms=retrieval_time_ms,
-                generation_time_ms=generation_time_ms,
-                total_time_ms=total_time_ms,
-            )
+                total_time_ms = (time.perf_counter() - total_start) * 1000
+                track_latency("rag.total", total_time_ms)
 
-        # 4) Build citations from retrieval results
-        citations = self._build_citations(results)
+                if self._prompt_template.refusal_message in gen_result.text:
+                    track_citation(False)
+                    track_confidence(0.0)
+                    resp = QueryResponse(
+                        mode="conversational",
+                        answer=self._prompt_template.refusal_message,
+                        citations=[],
+                        confidence=0.0,
+                        retrieval_time_ms=retrieval_time_ms,
+                        generation_time_ms=generation_time_ms,
+                        total_time_ms=total_time_ms,
+                    )
+                    return resp
 
-        # Heuristic confidence from retrieval scores
-        if results:
-            top_scores = [r.score for r in results[:3]]
-            confidence = max(0.0, min(1.0, sum(top_scores) / len(top_scores)))
-        else:
-            confidence = 0.0
+                # 4) Build citations from retrieval results
+                citations = self._build_citations(results)
+                is_cited = len(citations) > 0
+                track_citation(is_cited)
 
-        return QueryResponse(
-            mode="conversational",
-            answer=gen_result.text.strip(),
-            citations=citations,
-            confidence=confidence,
-            retrieval_time_ms=retrieval_time_ms,
-            generation_time_ms=generation_time_ms,
-            total_time_ms=total_time_ms,
-        )
+                # Heuristic confidence from retrieval scores
+                if results:
+                    top_scores = [r.score for r in results[:3]]
+                    confidence = max(0.0, min(1.0, sum(top_scores) / len(top_scores)))
+                else:
+                    confidence = 0.0
+                track_confidence(confidence)
+
+                resp = QueryResponse(
+                    mode="conversational",
+                    answer=gen_result.text.strip(),
+                    citations=citations,
+                    confidence=confidence,
+                    retrieval_time_ms=retrieval_time_ms,
+                    generation_time_ms=generation_time_ms,
+                    total_time_ms=total_time_ms,
+                )
+
+                # Score end-of-trace metrics
+                if observer.enabled:
+                    observer.latency_score(total_time_ms, "p50")
+                    observer.score(name="citation_coverage", value=1.0 if is_cited else 0.0)
+                    observer.score(name="confidence", value=confidence)
+
+                return resp
+        except Exception:
+            # Ensure metrics still recorded even on error
+            track_citation(False)
+            track_confidence(0.0)
+            raise
 
     async def query_stream(self, request: QueryRequest) -> AsyncGenerator[str, None]:
         """Execute the full RAG pipeline with SSE streaming."""
@@ -207,6 +262,7 @@ class RAGService:
             query=request.query, top_k=request.top_k
         )
         retrieval_time_ms = (time.perf_counter() - retrieval_start) * 1000
+        track_latency("retrieval", retrieval_time_ms)
 
         if not results:
             yield f"data: {json.dumps({'answer': 'I cannot answer from the provided sources.', 'citations': [], 'confidence': 0.0, 'retrieval_time_ms': retrieval_time_ms, 'generation_time_ms': 0, 'total_time_ms': (time.perf_counter() - total_start) * 1000, 'done': True})}\n\n"
