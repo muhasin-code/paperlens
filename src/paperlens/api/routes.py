@@ -10,6 +10,7 @@ from src.paperlens.api.schemas import HealthResponse, QueryModeRequest, QueryReq
 from src.paperlens.extraction.inference import get_extraction_inference
 from src.paperlens.extraction.router import QueryRouter
 from src.paperlens.llm.base import LLMProvider
+from src.paperlens.observability.metrics import snapshot as get_snapshot
 from src.paperlens.settings import get_settings
 
 logger = logging.getLogger("paperlens.api")
@@ -162,3 +163,13 @@ async def health_endpoint(http_request: Request) -> HealthResponse:
         llm_model=service.primary_model,
         llm_fallback_model=service.fallback_model,
     )
+
+
+@router.get(
+    "/observability/metrics",
+    summary="Current observability metrics snapshot",
+    description="Returns P50/P95 latency, confidence histogram, citation coverage, and token usage. Admin endpoint; no auth required in dev.",
+)
+async def metrics_endpoint() -> dict:
+    """Debug endpoint to read current metrics without Langfuse UI."""
+    return get_snapshot().model_dump()
