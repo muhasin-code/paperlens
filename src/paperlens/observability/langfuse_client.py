@@ -26,12 +26,14 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any
+from typing import Any
+
+try:
+    from langfuse.types import TraceContext
+except ImportError:
+    TraceContext = None  # type: ignore[assignment,misc]
 
 from src.paperlens.settings import Settings
-
-if TYPE_CHECKING:
-    from langfuse.types import TraceContext
 
 logger = logging.getLogger("paperlens.observability")
 
@@ -151,16 +153,22 @@ class LangfuseClient:
         trace_id = self._client.create_trace_id()
         trace_ctx = TraceContext(trace_id=trace_id)
 
+        # Merge user_id, session_id, tags into metadata
+        merged_metadata = {**(metadata or {})}
+        if user_id is not None:
+            merged_metadata["user_id"] = user_id
+        if session_id is not None:
+            merged_metadata["session_id"] = session_id
+        if tags:
+            merged_metadata["tags"] = tags
+
         with self._client.start_as_current_observation(
             name=name,
             as_type="span",
             trace_context=trace_ctx,
             input=input,
             output=output,
-            user_id=user_id,
-            session_id=session_id,
-            tags=tags or [],
-            metadata=metadata or {},
+            metadata=merged_metadata,
         ) as trace:
             trace.update(metadata={"input_length": len(str(input)) if input else 0})
             yield trace
