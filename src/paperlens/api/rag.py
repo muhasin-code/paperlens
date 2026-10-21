@@ -6,6 +6,7 @@ import re
 import time
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -126,6 +127,7 @@ class RAGService:
         llm_provider: LLMProvider,
         retriever: SemanticRetriever | None = None,
         hybrid_retriever: HybridRetriever | None = None,
+        observer: Any | None = None,
     ) -> None:
         self.settings = settings
         self._hybrid_retriever = hybrid_retriever
@@ -149,11 +151,12 @@ class RAGService:
         # Health check cache (TTL 10 seconds)
         self._health_cache: tuple[float, dict] | None = None
         self._health_ttl = 10.0
+        self._observer = observer or _get_observer()
 
     async def query(self, request: QueryRequest) -> QueryResponse:
         """Execute the full RAG pipeline for a single query."""
         total_start = time.perf_counter()
-        observer = _get_observer()
+        observer = self._observer
 
         # Record start for timeout/observability
         is_cited = False

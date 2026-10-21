@@ -27,7 +27,8 @@ def get_rag_service(request: Request) -> RAGService:
     global _rag_service
     if _rag_service is None:
         llm_provider: LLMProvider = request.app.state.llm_provider
-        _rag_service = RAGService(get_settings(), llm_provider=llm_provider)
+        observer = get_observer(request=request)
+        _rag_service = RAGService(get_settings(), llm_provider=llm_provider, observer=observer)
     return _rag_service
 
 
