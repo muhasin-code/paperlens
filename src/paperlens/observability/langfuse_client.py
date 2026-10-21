@@ -102,9 +102,7 @@ class LangfuseClient:
         secret_key = self.settings.langfuse_secret_key
 
         if not public_key or not secret_key:
-            logger.warning("Langfuse keys not set; using UI signup flow")
-            # Let SDK handle initialization (will use defaults, user can set keys later)
-            # Or bail out to no-op if we require explicit keys
+            logger.warning("Langfuse keys not set; tracing disabled")
             return None
 
         try:
@@ -113,8 +111,26 @@ class LangfuseClient:
             client = Langfuse(
                 public_key=public_key,
                 secret_key=secret_key,
-                host=self.settings.langfuse_host,
+                base_url=self.settings.langfuse_host,
             )
+            try:
+                if client.auth_check():
+                    logger.info(
+                        "Langfuse auth_check ok (host=%s)",
+                        self.settings.langfuse_host,
+                    )
+                else:
+                    logger.error(
+                        "Langfuse auth_check failed (host=%s). "
+                        "API keys do not match this server, so traces will not show up.",
+                        self.settings.langfuse_host,
+                    )
+            except Exception as exc:
+                logger.error(
+                    "Langfuse auth_check raised (host=%s): %s",
+                    self.settings.langfuse_host,
+                    exc,
+                )
             logger.info("Langfuse client initialized (host=%s)", self.settings.langfuse_host)
             return client
         except ImportError as e:
@@ -285,7 +301,7 @@ class LangfuseClient:
             try:
                 self._client.flush()
             except Exception as e:
-                logger.debug("Langfuse flush (best-effort): %s", e)
+                logger.warning("Langfuse flush failed: %s", e)
 
     def shutdown(self) -> None:
         """Gracefully shutdown the client and flush pending data."""

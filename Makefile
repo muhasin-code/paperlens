@@ -200,7 +200,7 @@ benchmark:
 
 langfuse-up:
 	@echo "-> Starting Langfuse observability stack..."
-	docker compose up -d langfuse-web postgres clickhouse redis minio
+	docker compose up -d langfuse-web langfuse-worker postgres clickhouse redis minio
 	@echo "   UI: http://localhost:3000   (admin@paperlens.local / paperlens)"
 	@echo "   Run 'make langfuse-logs' to watch logs."
 
@@ -210,7 +210,7 @@ langfuse-down:
 
 langfuse-logs:
 	@echo "-> Tailing Langfuse logs (Ctrl+C to exit)..."
-	docker compose logs -f langfuse-web
+	docker compose logs -f langfuse-web langfuse-worker
 
 test-observability:
 	@echo "-> Running observability unit tests..."
