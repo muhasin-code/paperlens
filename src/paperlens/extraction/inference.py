@@ -2,14 +2,26 @@
 
 import json
 import logging
+import time
 from typing import Literal
 
 from pydantic import ValidationError
 
 from src.paperlens.extraction.models import ExtractionOutput
+from src.paperlens.observability.langfuse_client import get_langfuse_client
+from src.paperlens.observability.metrics import track_latency, track_tokens
 from src.paperlens.settings import Settings
 
 logger = logging.getLogger("paperlens.extraction")
+
+_observer = None
+
+
+def _get_observer():
+    global _observer
+    if _observer is None:
+        _observer = get_langfuse_client()
+    return _observer
 
 
 class ExtractionInference:
@@ -55,12 +67,36 @@ class ExtractionInference:
         Returns:
             ExtractionOutput with all 5 fields (may be null for empty fields)
         """
+        start = time.perf_counter()
+        observer = _get_observer()
+
         if self.mode == "hf_api":
-            return await self._infer_with_hf_api(chunk_text)
+            result = await self._infer_with_hf_api(chunk_text)
         elif self.mode == "local_placeholder":
-            return self._placeholder_output(chunk_text)
+            result = self._placeholder_output(chunk_text)
         elif self.mode == "kaggle":
-            return await self._infer_local_kaggle(chunk_text)
+            result = await self._infer_local_kaggle(chunk_text)
+
+        elapsed = (time.perf_counter() - start) * 1000
+        track_latency("extraction", elapsed)
+        track_tokens(self.settings.hf_hub_model_id, len(chunk_text.split()))
+
+        if observer.enabled:
+            with observer.generation(
+                name="extraction",
+                model=self.settings.extraction_adapter_repo,
+                input=chunk_text,
+                output=result.model_dump(exclude_none=False)
+                if hasattr(result, "model_dump")
+                else str(result),
+                metadata={
+                    "extraction.mode": self.mode,
+                    "extraction.latency_ms": elapsed,
+                },
+            ):
+                pass
+
+        return result
 
     async def _infer_with_hf_api(self, chunk_text: str) -> ExtractionOutput:
         """Run inference via HuggingFace Inference API.
