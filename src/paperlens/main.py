@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from src.paperlens.api.retrieval_routes import router as retrieval_router
 from src.paperlens.api.routes import router as api_router
 from src.paperlens.llm import get_llm_provider
+from src.paperlens.observability.langfuse_client import get_langfuse_client, reset_langfuse_client
 from src.paperlens.settings import get_settings
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -69,8 +70,21 @@ async def lifespan(app: FastAPI):
     CrossEncoderReranker.get_model(settings.reranker_model)
     logger.info("Cross-encoder model loaded.")
 
+    # 5) Initialize Langfuse observability
+    logger.info("Initializing Langfuse observability...")
+    observer = get_langfuse_client()
+    if observer.enabled:
+        logger.info("Langfuse tracing enabled (host=%s)", settings.langfuse_host)
+    app.state.observer = observer
+    logger.info("Langfuse observability initialized.")
+
     yield
 
+    # Shutdown: flush any pending traces
+    logger.info("Shutting down Langfuse client...")
+    if observer:
+        observer.shutdown()
+    reset_langfuse_client()
     logger.info("PaperLens API shutting down")
 
 

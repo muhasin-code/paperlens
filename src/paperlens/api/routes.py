@@ -10,6 +10,7 @@ from src.paperlens.api.schemas import HealthResponse, QueryModeRequest, QueryReq
 from src.paperlens.extraction.inference import get_extraction_inference
 from src.paperlens.extraction.router import QueryRouter
 from src.paperlens.llm.base import LLMProvider
+from src.paperlens.observability.langfuse_client import get_langfuse_client
 from src.paperlens.observability.metrics import snapshot as get_snapshot
 from src.paperlens.settings import get_settings
 
@@ -28,6 +29,18 @@ def get_rag_service(request: Request) -> RAGService:
         llm_provider: LLMProvider = request.app.state.llm_provider
         _rag_service = RAGService(get_settings(), llm_provider=llm_provider)
     return _rag_service
+
+
+def _get_observer():
+    global _observer
+    if _observer is None:
+        _observer = get_langfuse_client()
+    return _observer
+
+
+def get_observer(request: Request):
+    """Return the Langfuse observer from app state."""
+    return getattr(request.app.state, "observer", None) or _get_observer()
 
 
 @router.post(
