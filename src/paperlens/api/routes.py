@@ -21,6 +21,9 @@ router = APIRouter(prefix="", tags=["rag"])
 # Service instance created on first request (lazy) to avoid import-time side effects
 _rag_service: RAGService | None = None
 
+_rag_service: RAGService | None = None
+_observer = None
+
 
 def get_rag_service(request: Request) -> RAGService:
     """Return a singleton RAGService instance."""

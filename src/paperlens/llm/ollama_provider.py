@@ -1,6 +1,7 @@
 """Ollama provider implimentation using ollama.AsyncClient."""
 
 import logging
+from collections.abc import AsyncIterator
 
 import ollama
 
@@ -41,6 +42,27 @@ class OllamaProvider(LLMProvider):
             },
         )
         return resp.get("response", "")
+
+    async def stream(
+        self, prompt: str, model: str, options: dict | None = None
+    ) -> AsyncIterator[str]:
+        client = self._get_client()
+        opts = options or {}
+        system = opts.get("system")
+        prompt_text = f"{system}\n\n{prompt}" if system else prompt
+        stream = await client.generate(
+            model=model,
+            prompt=prompt_text,
+            options={
+                "temperature": opts.get("temperature", 0.1),
+                "num_predict": opts.get("num_predict", 1024),
+            },
+            stream=True,
+        )
+        async for chunk in stream:
+            token = chunk.get("response", "")
+            if token:
+                yield token
 
     async def is_reachable(self) -> bool:
         try:
