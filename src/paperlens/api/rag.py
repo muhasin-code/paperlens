@@ -6,6 +6,7 @@ import re
 import time
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -15,6 +16,13 @@ from src.paperlens.embedding.embedder import EmbeddingModel
 from src.paperlens.embedding.retriever import RetrievalResult, SemanticRetriever
 from src.paperlens.embedding.vector_store import VectorStore
 from src.paperlens.llm.base import LLMProvider
+from src.paperlens.observability.langfuse_client import get_langfuse_client
+from src.paperlens.observability.metrics import (
+    track_citation,
+    track_confidence,
+    track_latency,
+    track_tokens,
+)
 from src.paperlens.retrieval.hybrid import HybridRetriever
 from src.paperlens.settings import Settings
 
@@ -44,6 +52,17 @@ def _get_embedding_model(settings: Settings) -> EmbeddingModel:
     return _embedding_model_cache
 
 
+# Module-level singleton for Langfuse Observablity
+_observer = None
+
+
+def _get_observer():
+    global _observer
+    if _observer is None:
+        _observer = get_langfuse_client()
+    return _observer
+
+
 class LLMOutput(BaseModel):
     """Structured validation for LLM output."""
 
@@ -53,47 +72,18 @@ class LLMOutput(BaseModel):
     def validate_response(
         cls, text: str, refusal_message: str, has_context: bool = True
     ) -> tuple[bool, str]:
-        if not text or not text.strip():
+        if not text or not str(text).strip():
             return False, "invalid"
 
-        text = text.strip()
+        text = str(text).strip()
 
-        # Exact match
+        # Only an exact refusal is a refusal. A missing [chunk_id] is malformed
+        # and must be retried, not rewritten into the refusal sentence.
         if text == refusal_message:
             return False, refusal_message
 
-        # Check for citation markers
         has_citations = bool(re.search(r"\[[^\]]+\]", text))
-
-        if not has_citations:
-            # If we have context but no citations, likely a refusal
-            if has_context:
-                # Check for refusal-like language
-                refusal_phrases = [
-                    "cannot answer",
-                    "can't answer",
-                    "unable to answer",
-                    "don't know",
-                    "do not know",
-                    "insufficient information",
-                    "not enough information",
-                    "not in the context",
-                    "not provided in the context",
-                    "context does not contain",
-                    "no information",
-                    "cannot find",
-                    "i don't know",
-                    "i cannot",
-                    "i am unable",
-                    "not mentioned",
-                    "not found",
-                ]
-                text_lower = text.lower()
-                if any(phrase in text_lower for phrase in refusal_phrases):
-                    return False, refusal_message
-                # Even without explicit refusal phrases, if context exists but no citations,
-                # treat as implicit refusal to avoid retries
-                return False, refusal_message
+        if has_context and not has_citations:
             return False, "invalid"
 
         return True, text
@@ -108,6 +98,7 @@ class RAGService:
         llm_provider: LLMProvider,
         retriever: SemanticRetriever | None = None,
         hybrid_retriever: HybridRetriever | None = None,
+        observer: Any | None = None,
     ) -> None:
         self.settings = settings
         self._hybrid_retriever = hybrid_retriever
@@ -131,71 +122,130 @@ class RAGService:
         # Health check cache (TTL 10 seconds)
         self._health_cache: tuple[float, dict] | None = None
         self._health_ttl = 10.0
+        self._observer = observer or _get_observer()
 
     async def query(self, request: QueryRequest) -> QueryResponse:
         """Execute the full RAG pipeline for a single query."""
         total_start = time.perf_counter()
+        observer = self._observer
 
-        # 1) Retrieval (Hybrid RRF only - reranker disabled per M2.5 benchmark)
-        retrieval_start = time.perf_counter()
-        results: list[RetrievalResult] = self.retriever.search(
-            query=request.query, top_k=request.top_k
-        )
-        if self.settings.llm_provider == "openai_compat":
-            results = results[:5]  # Top 5 chunks = ~3000 tokens, fits in Groq limits
-        retrieval_time_ms = (time.perf_counter() - retrieval_start) * 1000
-
-        if not results:
-            return QueryResponse(
-                mode="conversational",
-                answer="I cannot answer from the provided sources.",
-                citations=[],
-                confidence=0.0,
-                retrieval_time_ms=retrieval_time_ms,
-                generation_time_ms=0.0,
-                total_time_ms=(time.perf_counter() - total_start) * 1000,
+        def _finish(
+            trace: Any,
+            resp: QueryResponse,
+            *,
+            cited: bool,
+            confidence: float,
+        ) -> QueryResponse:
+            trace.update(
+                output={
+                    "answer": resp.answer,
+                    "mode": resp.mode,
+                    "confidence": resp.confidence,
+                    "citation_count": len(resp.citations or []),
+                }
             )
+            if observer.enabled:
+                observer.latency_score(resp.total_time_ms, "p50")
+                observer.score(name="citation_coverage", value=1.0 if cited else 0.0)
+                observer.score(name="confidence", value=confidence)
+            return resp
 
-        # 2) Context assembly
-        context = self._assemble_context(results)
+        try:
+            with observer.trace(
+                "rag.query",
+                input=request.query,
+                user_id=None,
+                metadata={"query_length": len(request.query)},
+            ) as trace:
+                # 1) Retrieval (Hybrid RRF only - reranker disabled per M2.5 benchmark)
+                retrieval_start = time.perf_counter()
+                results: list[RetrievalResult] = self.retriever.search(
+                    query=request.query, top_k=request.top_k
+                )
+                retrieval_time_ms = (time.perf_counter() - retrieval_start) * 1000
+                track_latency("retrieval", retrieval_time_ms)
 
-        # 3) LLM generation (with fallback)
-        generation_start = time.perf_counter()
-        gen_result = await self._generate_with_fallback(request.query, context, request.model)
-        generation_time_ms = (time.perf_counter() - generation_start) * 1000
-        total_time_ms = (time.perf_counter() - total_start) * 1000
+                if not results:
+                    total_time_ms = (time.perf_counter() - total_start) * 1000
+                    track_citation(False)
+                    track_confidence(0.0)
+                    resp = QueryResponse(
+                        mode="conversational",
+                        answer="I cannot answer from the provided sources.",
+                        citations=[],
+                        confidence=0.0,
+                        retrieval_time_ms=retrieval_time_ms,
+                        generation_time_ms=0.0,
+                        total_time_ms=total_time_ms,
+                    )
+                    logger.info(
+                        "Retrieved %d chunks: %s",
+                        len(results),
+                        [f"{r.chunk.chunk_id} | {r.chunk.title[:80]}" for r in results],
+                    )
+                    return _finish(trace, resp, cited=False, confidence=0.0)
 
-        # Check for refusal response
-        if self._prompt_template.refusal_message in gen_result.text:
-            return QueryResponse(
-                mode="conversational",
-                answer=self._prompt_template.refusal_message,
-                citations=[],
-                confidence=0.0,
-                retrieval_time_ms=retrieval_time_ms,
-                generation_time_ms=generation_time_ms,
-                total_time_ms=total_time_ms,
-            )
+                # 2) Context assembly
+                context = self._assemble_context(results)
 
-        # 4) Build citations from retrieval results
-        citations = self._build_citations(results)
+                # 3) LLM generation (with fallback)
+                generation_start = time.perf_counter()
+                gen_result = await self._generate_with_fallback(
+                    request.query, context, request.model
+                )
+                generation_time_ms = (time.perf_counter() - generation_start) * 1000
+                track_latency("generation", generation_time_ms)
+                track_tokens(
+                    self.primary_model, len(context.split()) + len(gen_result.text.split())
+                )
 
-        # Heuristic confidence from retrieval scores
-        if results:
-            top_scores = [r.score for r in results[:3]]
-            confidence = max(0.0, min(1.0, sum(top_scores) / len(top_scores)))
-        else:
-            confidence = 0.0
+                total_time_ms = (time.perf_counter() - total_start) * 1000
+                track_latency("rag.total", total_time_ms)
 
-        return QueryResponse(
-            mode="conversational",
-            answer=gen_result.text.strip(),
-            citations=citations,
-            confidence=confidence,
-            retrieval_time_ms=retrieval_time_ms,
-            generation_time_ms=generation_time_ms,
-            total_time_ms=total_time_ms,
-        )
+                if gen_result.text.strip() == self._prompt_template.refusal_message:
+                    track_citation(False)
+                    track_confidence(0.0)
+                    resp = QueryResponse(
+                        mode="conversational",
+                        answer=self._prompt_template.refusal_message,
+                        citations=[],
+                        confidence=0.0,
+                        retrieval_time_ms=retrieval_time_ms,
+                        generation_time_ms=generation_time_ms,
+                        total_time_ms=total_time_ms,
+                    )
+                    return _finish(trace, resp, cited=False, confidence=0.0)
+
+                # 4) Build citations from retrieval results
+                citations = self._build_citations(results)
+                is_cited = len(citations) > 0
+                track_citation(is_cited)
+
+                if results:
+                    top_scores = [r.score for r in results[:3]]
+                    confidence = max(0.0, min(1.0, sum(top_scores) / len(top_scores)))
+                else:
+                    confidence = 0.0
+                track_confidence(confidence)
+
+                resp = QueryResponse(
+                    mode="conversational",
+                    answer=gen_result.text.strip(),
+                    citations=citations,
+                    confidence=confidence,
+                    retrieval_time_ms=retrieval_time_ms,
+                    generation_time_ms=generation_time_ms,
+                    total_time_ms=total_time_ms,
+                )
+                return _finish(trace, resp, cited=is_cited, confidence=confidence)
+        except Exception:
+            track_citation(False)
+            track_confidence(0.0)
+            raise
+        finally:
+            # Span is closed by the `with` before this runs, including on return.
+            if observer.enabled:
+                observer.flush()
 
     async def query_stream(self, request: QueryRequest) -> AsyncGenerator[str, None]:
         """Execute the full RAG pipeline with SSE streaming."""
@@ -207,6 +257,7 @@ class RAGService:
             query=request.query, top_k=request.top_k
         )
         retrieval_time_ms = (time.perf_counter() - retrieval_start) * 1000
+        track_latency("retrieval", retrieval_time_ms)
 
         if not results:
             yield f"data: {json.dumps({'answer': 'I cannot answer from the provided sources.', 'citations': [], 'confidence': 0.0, 'retrieval_time_ms': retrieval_time_ms, 'generation_time_ms': 0, 'total_time_ms': (time.perf_counter() - total_start) * 1000, 'done': True})}\n\n"
@@ -270,7 +321,9 @@ class RAGService:
         for r in results:
             cid = r.chunk.chunk_id
             txt = r.chunk.text.strip()
-            parts.append(f"[{cid}] {txt}")
+            parts.append(
+                f"[{cid}] title: {r.chunk.title} | section: {r.chunk.section_label}\n{txt}"
+            )
         return "\n---\n".join(parts)
 
     async def _generate_with_fallback(
@@ -290,12 +343,21 @@ class RAGService:
         - If second attempt also malformed: fall back to secondary model (attempt 2)
         - Maximum 2 retries to avoid compounding latency on slow CPU
         """
-        prompt = self._prompt_template.build_prompt(context=context, query=query)
+        system = self._prompt_template.system_prompt
+        prompt = self._prompt_template.user_template.format(context=context, query=query)
         model = model_override or self.primary_model
         refusal_msg = self._prompt_template.refusal_message
         has_context = bool(context and context.strip())
+        options = {
+            "temperature": 0.1,
+            "num_predict": 1024,
+            "system": system,
+            "reasoning_effort": "low",
+        }
 
         max_retries = 2
+        last_text = ""
+        last_latency_ms = 0.0
         for retry in range(max_retries + 1):
             try:
                 logger.info(
@@ -308,10 +370,16 @@ class RAGService:
                 text = await self.llm_provider.generate(
                     prompt=prompt,
                     model=model,
-                    options={"temperature": 0.1, "num_predict": 256},
+                    options=options,
                 )
                 latency_ms = (time.perf_counter() - start) * 1000
-                logger.debug("LLM raw response: %s", text[:200])
+                last_text = text or ""
+                last_latency_ms = latency_ms
+                logger.info(
+                    "LLM raw response (%d chars): %s",
+                    len(last_text),
+                    last_text[:400].replace("\n", " "),
+                )
 
                 is_valid, result = LLMOutput.validate_response(text, refusal_msg, has_context)
 
@@ -324,23 +392,28 @@ class RAGService:
                     )
 
                 logger.warning(
-                    "LLM output validation failed (attempt %d): response missing citation markers",
+                    "LLM output missing [chunk_id] citations (attempt %d)",
                     retry + 1,
                 )
-
                 if retry < max_retries:
                     continue
 
             except Exception as exc:
                 logger.warning("LLM generation failed with %s: %s", model, exc)
                 if attempt == 0:
-                    # Switch to fallback model for the retry
                     model = self.fallback_model
                     attempt = 1
                     continue
                 raise RuntimeError(
-                    f"Both primary ({self.primary_model}) and fallback ({self.fallback_model}) models failed"
+                    f"Both primary ({self.primary_model}) and fallback "
+                    f"({self.fallback_model}) models failed"
                 ) from exc
+
+        # Retries exhausted but the model did write an answer. Show it.
+        # Retrieval citations are still attached by query().
+        if last_text.strip() and last_text.strip() != refusal_msg:
+            logger.warning("Returning model output without citation markers after retries")
+            return GenerationResult(text=last_text, model_used=model, latency_ms=last_latency_ms)
 
         raise RuntimeError("Generation retry logic exhausted unexpectedly")
 

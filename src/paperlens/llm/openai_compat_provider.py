@@ -44,19 +44,45 @@ class OpenAICompatProvider(LLMProvider):
         options: dict | None = None,
     ) -> str:
         client = self._get_client()
-        temperature = (options or {}).get("temperature", 0.1)
+        opts = options or {}
+        temperature = opts.get("temperature", 0.1)
+        max_tokens = opts.get("max_completion_tokens") or opts.get("num_predict") or 1024
 
-        response = await client.post(
-            f"{self.base_url}/chat/completions",
-            json={
-                "model": model,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": temperature,
-            },
-        )
+        messages: list[dict[str, str]] = []
+        system = opts.get("system")
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+
+        body: dict = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_completion_tokens": max_tokens,
+        }
+        # gpt-oss defaults to medium reasoning, which often spends the whole
+        # budget before the answer. "low" is the right setting for grounded QA.
+        # Other Groq models reject this field with 400.
+        if "gpt-oss" in model:
+            body["reasoning_effort"] = opts.get("reasoning_effort", "low")
+
+        response = await client.post(f"{self.base_url}/chat/completions", json=body)
         response.raise_for_status()
         data = response.json()
-        return data["choices"][0]["message"]["content"]
+        choice = data["choices"][0]
+        message = choice.get("message") or {}
+        content = message.get("content") or ""
+        logger.info(
+            "Groq finish_reason=%s content_chars=%d model=%s",
+            choice.get("finish_reason"),
+            len(content),
+            model,
+        )
+        if not content.strip():
+            # Reasoning models sometimes return the answer only in `reasoning`.
+            content = message.get("reasoning") or ""
+            logger.warning("Groq content empty; using reasoning field (%d chars)", len(content))
+        return content
 
     async def stream(
         self,

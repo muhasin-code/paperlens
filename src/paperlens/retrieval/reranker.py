@@ -1,13 +1,25 @@
 """Cross-encoder reranker for PaperLens retrieval pipeline."""
 
 import logging
+import time
 
 from sentence_transformers import CrossEncoder
 
 from src.paperlens.embedding.models import RetrievalResult
+from src.paperlens.observability.langfuse_client import get_langfuse_client
+from src.paperlens.observability.metrics import track_latency
 from src.paperlens.settings import Settings
 
 logger = logging.getLogger("paperlens.retrieval")
+
+_observer = None
+
+
+def _get_observer():
+    global _observer
+    if _observer is None:
+        _observer = get_langfuse_client()
+    return _observer
 
 
 class CrossEncoderReranker:
@@ -64,23 +76,36 @@ class CrossEncoderReranker:
         if not results:
             return []
 
+        start = time.perf_counter()
+        observer = _get_observer()
         k = top_k or self.settings.rerank_top_k
 
         model_name = self.settings.reranker_model
         model = self.get_model(model_name)
 
         pairs = [(query, r.chunk.text) for r in results]
-
         scores: list[float] = model.predict(pairs)
 
         for r, score in zip(results, scores, strict=False):
             r.score = float(score)
-            logger.info(
-                "Reranker score: chunk_id=%s score=%.6f",
-                r.chunk.chunk_id,
-                score,
-            )
+            logger.info("Reranker score: chunk_id=%s score=%.6f", r.chunk.chunk_id, score)
 
         sorted_results = sorted(results, key=lambda x: x.score, reverse=True)
+        result = sorted_results[:k]
 
-        return sorted_results[:k]
+        elapsed = (time.perf_counter() - start) * 1000
+        track_latency("reranker", elapsed)
+
+        if observer.enabled:
+            with observer.span(
+                "reranker",
+                metadata={
+                    "reranker.input_count": len(results),
+                    "reranker.output_count": len(result),
+                    "reranker.latency_ms": elapsed,
+                    "reranker.model": model_name,
+                },
+            ):
+                pass
+
+        return result

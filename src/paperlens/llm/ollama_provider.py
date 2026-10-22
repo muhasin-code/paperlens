@@ -30,10 +30,16 @@ class OllamaProvider(LLMProvider):
 
     async def generate(self, prompt: str, model: str, options: dict | None = None) -> str:
         client = self._get_client()
+        opts = options or {}
+        system = opts.get("system")
+        prompt_text = f"{system}\n\n{prompt}" if system else prompt
         resp = await client.generate(
             model=model,
-            prompt=prompt,
-            options=options or {"temperature": 0.1, "num_predict": 256},
+            prompt=prompt_text,
+            options={
+                "temperature": opts.get("temperature", 0.1),
+                "num_predict": opts.get("num_predict", 1024),
+            },
         )
         return resp.get("response", "")
 
@@ -41,10 +47,16 @@ class OllamaProvider(LLMProvider):
         self, prompt: str, model: str, options: dict | None = None
     ) -> AsyncIterator[str]:
         client = self._get_client()
+        opts = options or {}
+        system = opts.get("system")
+        prompt_text = f"{system}\n\n{prompt}" if system else prompt
         stream = await client.generate(
             model=model,
-            prompt=prompt,
-            options=options or {"temperature": 0.1, "num_predict": 256},
+            prompt=prompt_text,
+            options={
+                "temperature": opts.get("temperature", 0.1),
+                "num_predict": opts.get("num_predict", 1024),
+            },
             stream=True,
         )
         async for chunk in stream:

@@ -10,6 +10,8 @@ from src.paperlens.api.schemas import HealthResponse, QueryModeRequest, QueryReq
 from src.paperlens.extraction.inference import get_extraction_inference
 from src.paperlens.extraction.router import QueryRouter
 from src.paperlens.llm.base import LLMProvider
+from src.paperlens.observability.langfuse_client import get_langfuse_client
+from src.paperlens.observability.metrics import snapshot as get_snapshot
 from src.paperlens.settings import get_settings
 
 logger = logging.getLogger("paperlens.api")
@@ -19,14 +21,30 @@ router = APIRouter(prefix="", tags=["rag"])
 # Service instance created on first request (lazy) to avoid import-time side effects
 _rag_service: RAGService | None = None
 
+_rag_service: RAGService | None = None
+_observer = None
+
 
 def get_rag_service(request: Request) -> RAGService:
     """Return a singleton RAGService instance."""
     global _rag_service
     if _rag_service is None:
         llm_provider: LLMProvider = request.app.state.llm_provider
-        _rag_service = RAGService(get_settings(), llm_provider=llm_provider)
+        observer = get_observer(request=request)
+        _rag_service = RAGService(get_settings(), llm_provider=llm_provider, observer=observer)
     return _rag_service
+
+
+def _get_observer():
+    global _observer
+    if _observer is None:
+        _observer = get_langfuse_client()
+    return _observer
+
+
+def get_observer(request: Request):
+    """Return the Langfuse observer from app state."""
+    return getattr(request.app.state, "observer", None) or _get_observer()
 
 
 @router.post(
@@ -162,3 +180,13 @@ async def health_endpoint(http_request: Request) -> HealthResponse:
         llm_model=service.primary_model,
         llm_fallback_model=service.fallback_model,
     )
+
+
+@router.get(
+    "/observability/metrics",
+    summary="Current observability metrics snapshot",
+    description="Returns P50/P95 latency, confidence histogram, citation coverage, and token usage. Admin endpoint; no auth required in dev.",
+)
+async def metrics_endpoint() -> dict:
+    """Debug endpoint to read current metrics without Langfuse UI."""
+    return get_snapshot().model_dump()

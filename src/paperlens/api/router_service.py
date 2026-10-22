@@ -12,9 +12,22 @@ from src.paperlens.api.schemas import Citation, QueryRequest
 from src.paperlens.extraction.inference import ExtractionInference, get_extraction_inference
 from src.paperlens.extraction.models import ExtractionOutput
 from src.paperlens.extraction.router import QueryRouter, RouterDecision
+from src.paperlens.observability.langfuse_client import get_langfuse_client
+from src.paperlens.observability.metrics import track_latency
 from src.paperlens.settings import Settings
 
 logger = logging.getLogger("paperlens.rag")
+
+# Module-level configuration of observability
+_observed_router = None
+
+
+def _get_router_observer():
+    """Return the Langfuse client for router instrumentation."""
+    global _observed_router
+    if _observed_router is None:
+        _observed_router = get_langfuse_client()
+    return _observed_router
 
 
 class QueryResponse(BaseModel):
@@ -76,16 +89,41 @@ class RouterService:
             QueryResponse with appropriate data for the routing mode
         """
         total_start = time.perf_counter()
+        observer = _get_router_observer()
 
         decision = self.router.classify(request.query)
         logger.info(
             "Query classified as '%s' with confidence %.2f", decision.mode, decision.confidence
         )
 
-        if decision.mode == "structured":
-            return await self._handle_structured(request, decision, total_start)
-        else:
-            return await self._handle_conversational(request, decision, total_start)
+        # Track router latency
+        track_latency("router.decision_time", (time.perf_counter() - total_start) * 1000)
+
+        with observer.span(
+            "router.decision",
+            metadata={
+                "router.mode": decision.mode,
+                "router.confidence": decision.confidence,
+                # Track only first 5 keywords (bounded cardinality)
+                "router.matched_keywords": decision.matched_keywords[:5],
+                "router.total_keywords": decision.total_keywords,
+            },
+        ) as _:
+            if decision.mode == "structured":
+                resp = await self._handle_structured(request, decision, total_start)
+            else:
+                resp = await self._handle_conversational(request, decision, total_start)
+
+            # Score router decision at trace level
+            if observer.enabled:
+                observer.score(
+                    name="router_mode",
+                    value=1.0 if decision.mode == "structured" else 0.0,
+                    data_type="CATEGORICAL",
+                    comment=f"mode={decision.mode}",
+                )
+
+            return resp
 
     async def _handle_conversational(
         self,
@@ -138,6 +176,23 @@ class RouterService:
 
         generation_time_ms = (time.perf_counter() - gen_start) * 1000
         total_time_ms = (time.perf_counter() - total_start) * 1000
+
+        # Note: extraction_inference.extract() is already instrumented via instrument_extraction decorator
+        # Here we add generation span wrapper for Langfuse
+        observer = _get_router_observer()
+
+        if observer.enabled:
+            with observer.generation(
+                name="extraction",
+                model=self.settings.extraction_adapter_repo,
+                input=request.query,
+                output=extraction.model_dump(exclude_none=False),
+                metadata={
+                    "extraction_mode": self.extraction_inference.mode,
+                    "extraction.latency_ms": generation_time_ms,
+                },
+            ):
+                pass
 
         return QueryResponse(
             mode="structured",
