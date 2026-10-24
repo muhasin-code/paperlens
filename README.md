@@ -126,7 +126,7 @@ make run
 
 # 7. Start React dev server (new terminal, optional for hot reload)
 make frontend-dev
-# → http://localhost:3000
+# → http://localhost:5173
 ```
 
 Or production mode (serves React build from FastAPI):

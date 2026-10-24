@@ -480,7 +480,7 @@ They do not cover `auth_check`, the Docker stack, or a real export. Those are th
 
 - The conversational path has no `generation` observation. Model, finish reason, and the raw completion are logs.
 - `retrieval.hybrid` does not contain the chunk ids or titles. Those are logged, not traced.
-- `query_stream` is not traced.
+- `POST /query/stream` opens `rag.query_stream`, scores `ttft_ms`, and flushes in `finally`. It still has no `generation` observation. TTFT percentiles are `latency_p50_ms["stream.ttft"]` on the metrics endpoint.
 - `RouterService` and the reranker are instrumented and unused by `routes.py`.
 - Score name `latency_p50` is not a percentile.
 - Token counts are whitespace splits.
