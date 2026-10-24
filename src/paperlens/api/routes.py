@@ -1,5 +1,6 @@
 """FastAPI route handlers for PaperLens API."""
 
+import json
 import logging
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -103,9 +104,20 @@ async def query_stream_endpoint(request: QueryModeRequest, http_request: Request
     """Handle POST /query/stream — streaming RAG endpoint."""
     if request.mode == "structured":
         logger.warning("Streaming not supported for structured extraction mode")
+        body = json.dumps(
+            {
+                "error": "Streaming not available for structured extraction",
+                "done": True,
+            }
+        )
         return StreamingResponse(
-            iter([b"data: {'error': 'Streaming not available for structured extraction'}\n\n"]),
+            iter([f"data: {body}\n\n"]),
             media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            },
         )
 
     service = get_rag_service(http_request)
@@ -114,7 +126,11 @@ async def query_stream_endpoint(request: QueryModeRequest, http_request: Request
         return StreamingResponse(
             service.query_stream(rag_request),
             media_type="text/event-stream",
-            headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            },
         )
     except RuntimeError as exc:
         logger.exception("RAG pipeline failed")

@@ -11,7 +11,8 @@ import {
   Clock,
   Layers,
   Sparkles,
-  BookOpen
+  BookOpen,
+  Zap
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Markdown from "react-markdown";
@@ -39,6 +40,8 @@ export default function App() {
   const [answer, setAnswer] = useState("");
   const [citations, setCitations] = useState<Citation[]>([]);
   const [latency, setLatency] = useState<number | null>(null);
+  const [ttft, setTtft] = useState<number | null>(null);
+  const [chunksPerSec, setChunksPerSec] = useState<number | null>(null);
   const [confidence, setConfidence] = useState<number | null>(null);
 
   // Copy feedback state
@@ -105,6 +108,9 @@ export default function App() {
     setAnswer("");
     setCitations([]);
     setLatency(null);
+    setConfidence(null);
+    setTtft(null);
+    setChunksPerSec(null);
     setIsLoading(true);
     setHasQueried(true);
     setIsStreaming(true);
@@ -173,40 +179,30 @@ export default function App() {
             try {
               const parsed = JSON.parse(jsonStr);
 
-              // Handle answer chunk/token
-              if (parsed.answer !== undefined) {
-                setAnswer((prev) => prev + parsed.answer);
-              } else if (parsed.token !== undefined) {
+              // Handle token
+              if (parsed.token !== undefined) {
                 setAnswer((prev) => prev + parsed.token);
-              } else if (parsed.text !== undefined) {
-                setAnswer((prev) => prev + parsed.text);
               }
 
-              // Handle citations (can be full array or individual item updates)
-              if (parsed.citations !== undefined && Array.isArray(parsed.citations)) {
+              // Handle citations (replace, not append)
+              if (Array.isArray(parsed.citations)) {
                 setCitations(parsed.citations);
-              } else if (parsed.citation !== undefined && parsed.citation !== null) {
-                setCitations((prev) => {
-                  const exists = prev.some((c) => c.chunk_id === parsed.citation.chunk_id);
-                  if (exists) return prev;
-                  return [...prev, parsed.citation];
-                });
               }
 
-              // Handle latency (if computed on backend)
-              if (parsed.latency_ms !== undefined) {
-                setLatency(parsed.latency_ms);
-              }
+              // Handle latency & throughput fields from final event
+              if (typeof parsed.ttft_ms === "number") setTtft(parsed.ttft_ms);
+              if (typeof parsed.chunks_per_sec === "number") setChunksPerSec(parsed.chunks_per_sec);
+              if (typeof parsed.total_time_ms === "number") setLatency(parsed.total_time_ms);
+
+              // Handle error from structured mode
+              if (typeof parsed.error === "string") setError(parsed.error);
+
             } catch (err) {
               console.warn("Could not parse event stream chunk:", err, trimmed);
             }
           }
         }
       }
-
-      // Set finish latency
-      const endTime = performance.now();
-      setLatency((prev) => prev !== null ? prev : Math.round(endTime - startTime));
 
     } catch (err: any) {
       if (err.name === "AbortError") {
@@ -501,16 +497,29 @@ export default function App() {
                         </span>
                       </div>
 
-                      {/* Query latency badge */}
-                      {latency !== null && (
+                      {/* TTFT badge */}
+                      {ttft !== null && (
                         <div
-                          id="latency-badge"
+                          id="ttft-badge"
                           className={`flex items-center space-x-1.5 text-xs font-mono px-2.5 py-1 rounded-full ${
                             isDark ? "bg-slate-900 text-slate-400" : "bg-slate-100 text-slate-600"
                           }`}
                         >
-                          <Clock className="h-3.5 w-3.5" />
-                          <span>{latency} ms</span>
+                          <Zap className="h-3.5 w-3.5" />
+                          <span>TTFT: {ttft} ms</span>
+                        </div>
+                      )}
+
+                      {/* Chunks/sec badge (during streaming) */}
+                      {isStreaming && chunksPerSec !== null && (
+                        <div
+                          id="chunks-badge"
+                          className={`flex items-center space-x-1.5 text-xs font-mono px-2.5 py-1 rounded-full ${
+                            isDark ? "bg-slate-900 text-slate-400" : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          <Activity className="h-3.5 w-3.5" />
+                          <span>{chunksPerSec} chunks/s</span>
                         </div>
                       )}
                     </div>

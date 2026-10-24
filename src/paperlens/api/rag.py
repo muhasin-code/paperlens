@@ -124,6 +124,25 @@ class RAGService:
         self._health_ttl = 10.0
         self._observer = observer or _get_observer()
 
+    def _user_prompt(self, context: str, query: str) -> str:
+        """Build the user prompt from context and query."""
+        return self._prompt_template.user_template.format(context=context, query=query)
+
+    def _llm_options(self) -> dict:
+        """Return standard LLM options shared by query() and query_stream()."""
+        return {
+            "temperature": 0.1,
+            "num_predict": 1024,
+            "system": self._prompt_template.system_prompt,
+        }
+
+    def _confidence_from_results(self, results: list[RetrievalResult]) -> float:
+        """Compute confidence heuristic from top-3 retrieval scores."""
+        if not results:
+            return 0.0
+        top_scores = [r.score for r in results[:3]]
+        return max(0.0, min(1.0, sum(top_scores) / len(top_scores)))
+
     async def query(self, request: QueryRequest) -> QueryResponse:
         """Execute the full RAG pipeline for a single query."""
         total_start = time.perf_counter()
@@ -250,70 +269,160 @@ class RAGService:
     async def query_stream(self, request: QueryRequest) -> AsyncGenerator[str, None]:
         """Execute the full RAG pipeline with SSE streaming."""
         total_start = time.perf_counter()
+        observer = self._observer
 
-        # 1) Retrieval (Hybrid RRF only - reranker disabled per M2.5 benchmark)
-        retrieval_start = time.perf_counter()
-        results: list[RetrievalResult] = self.retriever.search(
-            query=request.query, top_k=request.top_k
-        )
-        retrieval_time_ms = (time.perf_counter() - retrieval_start) * 1000
-        track_latency("retrieval", retrieval_time_ms)
+        def _sse(payload: dict) -> str:
+            return f"data: {json.dumps(payload)}\n\n"
 
-        if not results:
-            yield f"data: {json.dumps({'answer': 'I cannot answer from the provided sources.', 'citations': [], 'confidence': 0.0, 'retrieval_time_ms': retrieval_time_ms, 'generation_time_ms': 0, 'total_time_ms': (time.perf_counter() - total_start) * 1000, 'done': True})}\n\n"
-            return
+        try:
+            with observer.trace(
+                "rag.query_stream",
+                input=request.query,
+                metadata={"query_length": len(request.query)},
+            ) as trace:
+                retrieval_start = time.perf_counter()
+                results: list[RetrievalResult] = self.retriever.search(
+                    query=request.query, top_k=request.top_k
+                )
+                retrieval_time_ms = (time.perf_counter() - retrieval_start) * 1000
+                track_latency("retrieval", retrieval_time_ms)
 
-        # 2) Context assembly
-        context = self._assemble_context(results)
+                if not results:
+                    total_time_ms = (time.perf_counter() - total_start) * 1000
+                    track_citation(False)
+                    track_confidence(0.0)
+                    trace.update(
+                        output={
+                            "answer": self._prompt_template.refusal_message,
+                            "mode": "conversational",
+                            "confidence": 0.0,
+                            "citation_count": 0,
+                        }
+                    )
+                    if observer.enabled:
+                        observer.latency_score(total_time_ms, "p50")
+                        observer.score(name="citation_coverage", value=0.0)
+                        observer.score(name="confidence", value=0.0)
+                    yield _sse(
+                        {
+                            "answer": self._prompt_template.refusal_message,
+                            "citations": [],
+                            "confidence": 0.0,
+                            "retrieval_time_ms": round(retrieval_time_ms, 2),
+                            "generation_time_ms": 0,
+                            "total_time_ms": round(total_time_ms, 2),
+                            "done": True,
+                        }
+                    )
+                    return
 
-        # 3) Build citations
-        citations = self._build_citations(results)
+                context = self._assemble_context(results)
+                citations = self._build_citations(results)
+                yield _sse(
+                    {
+                        "citations": [c.model_dump() for c in citations],
+                        "retrieval_time_ms": round(retrieval_time_ms, 2),
+                    }
+                )
 
-        # Send initial metadata
-        yield f"data: {json.dumps({'citations': [c.model_dump() for c in citations], 'retrieval_time_ms': retrieval_time_ms})}\n\n"
+                user_prompt = self._user_prompt(context, request.query)
+                options = self._llm_options()
+                model = request.model or self.primary_model
 
-        # 4) LLM generation (with fallback) - stream tokens
-        generation_start = time.perf_counter()
-        prompt = self._prompt_template.build_prompt(context=context, query=request.query)
-        model = request.model or self.primary_model
-        response_text = ""
+                text = ""
+                used_model = model
+                ttft_ms: float | None = None
+                chunk_count = 0
+                generation_time_ms = 0.0
 
-        for attempt, m in enumerate((model, self.fallback_model)):
-            try:
-                logger.info("Generating with model=%s (attempt %d)", m, attempt + 1)
-                async for token in self.llm_provider.stream(
-                    prompt=prompt,
-                    model=m,
-                    options={"temperature": 0.1, "num_predict": 256},
-                ):
-                    if token:
-                        yield f"data: {json.dumps({'token': token})}\n\n"
-                        response_text += token
-                # Generation complete
-                generation_time_ms = (time.perf_counter() - generation_start) * 1000
+                for attempt, m in enumerate((model, self.fallback_model)):
+                    attempt_text = ""
+                    attempt_ttft: float | None = None
+                    attempt_chunks = 0
+                    stream_start = time.perf_counter()
+                    try:
+                        logger.info("Streaming with model=%s (attempt %d)", m, attempt + 1)
+                        async for token in self.llm_provider.stream(
+                            prompt=user_prompt, model=m, options=options
+                        ):
+                            if not token:
+                                continue
+                            if attempt_ttft is None:
+                                attempt_ttft = (time.perf_counter() - stream_start) * 1000
+                            attempt_chunks += 1
+                            attempt_text += token
+                            yield _sse({"token": token})
+                        text = attempt_text
+                        used_model = m
+                        ttft_ms = attempt_ttft
+                        chunk_count = attempt_chunks
+                        generation_time_ms = (time.perf_counter() - stream_start) * 1000
+                        break
+                    except Exception as exc:
+                        logger.warning("LLM stream failed with %s: %s", m, exc)
+                        if attempt_text:
+                            # Already yielded chunks — do not fall back
+                            raise RuntimeError(
+                                f"Stream failed after {attempt_chunks} chunks; not falling back"
+                            ) from exc
+                        if attempt == 0 and m != self.fallback_model:
+                            continue
+                        raise RuntimeError(
+                            f"Both primary ({self.primary_model}) and "
+                            f"fallback ({self.fallback_model}) models failed"
+                        ) from exc
+
                 total_time_ms = (time.perf_counter() - total_start) * 1000
-                # Heuristic confidence from retrieval scores
-                if results:
-                    top_scores = [r.score for r in results[:3]]
-                    confidence = max(0.0, min(1.0, sum(top_scores) / len(top_scores)))
-                else:
-                    confidence = 0.0
-                yield f"data: {json.dumps({'generation_time_ms': generation_time_ms, 'total_time_ms': total_time_ms, 'confidence': confidence, 'model': m, 'done': True})}\n\n"
-                return
-            except Exception as exc:  # noqa: BLE001
-                logger.warning("LLM generation failed with %s: %s", m, exc)
-                if attempt == 0:
-                    continue  # try fallback
-                raise RuntimeError(
-                    f"Both primary ({self.primary_model}) and fallback ({self.fallback_model}) models failed"
-                ) from exc
+                refused = text.strip() == self._prompt_template.refusal_message
+                confidence = 0.0 if refused else self._confidence_from_results(results)
+                track_latency("generation", generation_time_ms)
+                track_latency("rag.total", total_time_ms)
+                if ttft_ms is not None:
+                    track_latency("stream.ttft", ttft_ms)
+                track_citation(not refused and len(citations) > 0)
+                track_confidence(confidence)
 
-        # Check for refusal
-        if self._prompt_template.refusal_message in response_text:
-            yield f"data: {json.dumps({'answer': self._prompt_template.refusal_message, 'citations': [], 'confidence': 0.0, 'generation_time_ms': generation_time_ms, 'total_time_ms': total_time_ms, 'done': True})}\n\n"
-            return
-
-        raise RuntimeError("Generation loop exited unexpectedly")
+                elapsed_after_first = generation_time_ms - (ttft_ms or 0.0)
+                chunks_per_sec = (
+                    chunk_count / (elapsed_after_first / 1000.0) if elapsed_after_first > 0 else 0.0
+                )
+                final = {
+                    "generation_time_ms": round(generation_time_ms, 2),
+                    "total_time_ms": round(total_time_ms, 2),
+                    "confidence": round(confidence, 4),
+                    "model": used_model,
+                    "ttft_ms": round(ttft_ms, 2) if ttft_ms is not None else None,
+                    "chunk_count": chunk_count,
+                    "chunks_per_sec": round(chunks_per_sec, 2),
+                    "done": True,
+                }
+                if refused:
+                    final["refused"] = True
+                    final["citations"] = []
+                trace.update(
+                    output={
+                        "answer": text.strip()
+                        if not refused
+                        else self._prompt_template.refusal_message,
+                        "mode": "conversational",
+                        "confidence": confidence,
+                        "citation_count": 0 if refused else len(citations),
+                    }
+                )
+                if observer.enabled:
+                    observer.latency_score(total_time_ms, "p50")
+                    observer.score(name="citation_coverage", value=0.0 if refused else 1.0)
+                    observer.score(name="confidence", value=confidence)
+                    if ttft_ms is not None:
+                        observer.score(name="ttft_ms", value=round(ttft_ms, 2))
+                yield _sse(final)
+        except Exception:
+            track_citation(False)
+            track_confidence(0.0)
+            raise
+        finally:
+            if observer.enabled:
+                observer.flush()
 
     def _assemble_context(self, results: list[RetrievalResult]) -> str:
         """Concatenate chunk texts with [chunk_id] markers."""
@@ -343,17 +452,11 @@ class RAGService:
         - If second attempt also malformed: fall back to secondary model (attempt 2)
         - Maximum 2 retries to avoid compounding latency on slow CPU
         """
-        system = self._prompt_template.system_prompt
-        prompt = self._prompt_template.user_template.format(context=context, query=query)
+        user_prompt = self._user_prompt(context, query)
+        options = self._llm_options()
         model = model_override or self.primary_model
         refusal_msg = self._prompt_template.refusal_message
         has_context = bool(context and context.strip())
-        options = {
-            "temperature": 0.1,
-            "num_predict": 1024,
-            "system": system,
-            "reasoning_effort": "low",
-        }
 
         max_retries = 2
         last_text = ""
@@ -368,7 +471,7 @@ class RAGService:
                 )
                 start = time.perf_counter()
                 text = await self.llm_provider.generate(
-                    prompt=prompt,
+                    prompt=user_prompt,
                     model=model,
                     options=options,
                 )

@@ -31,7 +31,11 @@ format:
 
 test:
 	@echo "-> Running pytest..."
-	pytest tests/ -v
+	LANGFUSE_ENABLED=false pytest tests/ -v
+
+test-streaming:
+	@echo "-> Running streaming tests..."
+	LANGFUSE_ENABLED=false pytest tests/test_api/test_query_stream.py -v
 
 
 # ─── Ingestion ────────────────────────────────────────────────────────
@@ -232,18 +236,18 @@ clean:
 
 help:
 	@echo "Available targets:"
-	@echo " make install			Install runtime dependencies (CPU torch + requirements.txt)"
-	@echo " make install-dev 		Install runtime + dev tools + pre-commit hooks"
-	@echo " make lint 			Ruff lint check (no changes)"
-	@echo " make format			Ruff format + auto-fix (modifies files)"
-	@echo " make test			Run pytest suite"
-	@echo " make bm25-build     Build BM25 keyword index from chunks.parquet"
-	@echo " make bm25-rebuild	Rebuild BM25 keyword index from chunks.parquet forcefully"
-	@echo " make bm25-clean     Remove data/bm25_index.pkl"
-	@echo " make hybrid-verify    Smoke-test: hybrid retrieval with RRF"
-	@echo " make reranker-verify    Smoke-test: cross-encoder reranking"
-	@echo " make prompt-verify      Smoke-test: prompt loader"
-	@echo " make eval-retrieval      Run full retrieval benchmark (baseline vs hybrid vs hybrid+reranker)"
+	@echo "  make install			Install runtime dependencies (CPU torch + requirements.txt)"
+	@echo "  make install-dev 		Install runtime + dev tools + pre-commit hooks"
+	@echo "  make lint 			Ruff lint check (no changes)"
+	@echo "  make format			Ruff format + auto-fix (modifies files)"
+	@echo "  make test			Run pytest suite"
+	@echo "  make bm25-build     Build BM25 keyword index from chunks.parquet"
+	@echo "  make bm25-rebuild	Rebuild BM25 keyword index from chunks.parquet forcefully"
+	@echo "  make bm25-clean     Remove data/bm25_index.pkl"
+	@echo "  make hybrid-verify    Smoke-test: hybrid retrieval with RRF"
+	@echo "  make reranker-verify    Smoke-test: cross-encoder reranking"
+	@echo "  make prompt-verify      Smoke-test: prompt loader"
+	@echo "  make eval-retrieval      Run full retrieval benchmark (baseline vs hybrid vs hybrid+reranker)"
 	@echo "  make build-extraction-dataset  Build extraction dataset (API annotation)"
 	@echo "  make build-extraction-dry      Dry run: annotate 5 examples, no writes"
 	@echo "  make validate-extraction-dataset Validate dataset integrity"
@@ -254,17 +258,18 @@ help:
 	@echo "  make evaluate-extraction-dry  Dry run: evaluate first 10 examples only"
 	@echo "  make test-router                  Run router classification unit tests"
 	@echo "  make test-extraction-inference    Run extraction inference unit tests"
-	@echo " make run-backend		Start FastAPI dev server"
-	@echo " make run-frontend		Start React dev server"
-	@echo " make benchmark      		Run Ollama inference benchmarks (tokens/sec, TTFT, RAM)"
+	@echo "  make run-backend		Start FastAPI dev server"
+	@echo "  make run-frontend		Start React dev server"
+	@echo "  make benchmark      		Run Ollama inference benchmarks (tokens/sec, TTFT, RAM)"
 	@echo "  make langfuse-up                 Start Langfuse stack (UI + DBs)"
 	@echo "  make langfuse-down               Stop Langfuse stack"
 	@echo "  make langfuse-logs               Tail Langfuse logs"
 	@echo "  make test-observability          Run observability unit tests"
-	@echo " make clean			Remove __pycache__, .pyc, pytest and coverage artifacts"
-	@echo " make ingest			Run full arXiv ingestion pipeline"
-	@echo " make ingest-dry			Preview what would be ingested (no downloads)"
-	@echo " make parse			Run full PDF parsing pipeline"
-	@echo " make parse-dry			Preview parsing on 5 papers (no writes)"
-	@echo " make embed			Run full embedding pipeline into ChromaDB"
-	@echo " make embed-dry 		Preview embedding on 5 chunks (no writes)"
+	@echo "  make test-streaming          Run streaming-specific tests"
+	@echo "  make clean			Remove __pycache__, .pyc, pytest and coverage artifacts"
+	@echo "  make ingest			Run full arXiv ingestion pipeline"
+	@echo "  make ingest-dry			Preview what would be ingested (no downloads)"
+	@echo "  make parse			Run full PDF parsing pipeline"
+	@echo "  make parse-dry			Preview parsing on 5 papers (no writes)"
+	@echo "  make embed			Run full embedding pipeline into ChromaDB"
+	@echo "  make embed-dry 		Preview embedding on 5 chunks (no writes)"
