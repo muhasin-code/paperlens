@@ -1,6 +1,7 @@
 """Ollama provider implimentation using ollama.AsyncClient."""
 
 import logging
+import time
 from collections.abc import AsyncIterator
 
 import ollama
@@ -46,10 +47,19 @@ class OllamaProvider(LLMProvider):
     async def stream(
         self, prompt: str, model: str, options: dict | None = None
     ) -> AsyncIterator[str]:
+        """Stream tokens from Ollama with TTFT logging.
+
+        Default num_predict is 1024 (matching generate()). Logs first chunk TTFT.
+        """
+
         client = self._get_client()
         opts = options or {}
         system = opts.get("system")
         prompt_text = f"{system}\n\n{prompt}" if system else prompt
+
+        stream_start = time.perf_counter()
+        first_chunk_logged = False
+
         stream = await client.generate(
             model=model,
             prompt=prompt_text,
@@ -62,6 +72,10 @@ class OllamaProvider(LLMProvider):
         async for chunk in stream:
             token = chunk.get("response", "")
             if token:
+                if not first_chunk_logged:
+                    ttft_ms = (time.perf_counter() - stream_start) * 1000
+                    logger.info("Ollama TTFT %.0f ms model=%s", ttft_ms, model)
+                    first_chunk_logged = True
                 yield token
 
     async def is_reachable(self) -> bool:

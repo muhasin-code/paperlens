@@ -2,6 +2,7 @@
 
 import json
 import logging
+import time
 from collections.abc import AsyncIterator
 
 import httpx
@@ -90,31 +91,61 @@ class OpenAICompatProvider(LLMProvider):
         model: str,
         options: dict | None = None,
     ) -> AsyncIterator[str]:
-        client = self._get_client()
-        temperature = (options or {}).get("temperature", 0.1)
+        """Stream tokens from OpenAI-compatible API.
 
-        async with client.stream(
-            "POST",
-            f"{self.base_url}/chat/completions",
-            json={
-                "model": model,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": temperature,
-                "stream": True,
-            },
-        ) as response:
-            async for line in response.aiter_lines():
-                if line.startswith("data: "):
-                    line = line[6:]
-                if line and line != "[DONE]":
-                    try:
-                        data = json.loads(line)
-                        if "choices" in data and data["choices"]:
-                            delta = data["choices"][0].get("delta", {})
-                            if "content" in delta:
-                                yield delta["content"]
-                    except Exception:
-                        continue
+        Matches generate(): system/user roles, max_completion_tokens from num_predict,
+        reasoning_effort=low only for gpt-oss models. Yields delta.constant only.
+        """
+
+        client = self._get_client()
+        opts = options or {}
+        temperature = opts.get("temperature", 0.1)
+        max_tokens = opts.get("max_completion_tokens") or opts.get("num_predict") or 1024
+
+        messages: list[dict[str, str]] = []
+        system = opts.get("system")
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+
+        body: dict = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_completion_tokens": max_tokens,
+            "stream": True,
+        }
+        if "gpt-oss" in model:
+            body["reasoning_effort"] = opts.get("reasoning_effort", "low")
+
+        stream_start = time.perf_counter()
+        first_chunk_logged = False
+
+        try:
+            async with client.stream(
+                "POST", f"{self.base_url}/chat/completions", json=body
+            ) as response:
+                async for line in response.aiter_lines():
+                    if line.startswith("data: "):
+                        line = line[6:]
+                    if line and line != "[DONE]":
+                        try:
+                            data = json.loads(line)
+                            if "choices" in data and data["choices"]:
+                                delta = data["choices"][0].get("delta", {})
+                                if "content" in delta and delta["content"]:
+                                    if not first_chunk_logged:
+                                        ttft_ms = (time.perf_counter() - stream_start) * 1000
+                                        logger.info(
+                                            "OpenAI-compat TTFT %.0f ms model=%s", ttft_ms, model
+                                        )
+                                        first_chunk_logged = True
+                                    yield delta["content"]
+                        except Exception:
+                            continue
+        except Exception as exc:
+            logger.error("OpenAI-compatible streaming error: %s", exc)
+            raise
 
     async def is_reachable(self) -> bool:
         try:
