@@ -8,12 +8,14 @@ chunk labels by unioning top semantic and BM25 hits from the seed papers.
 import itertools
 import json
 import sys
+from cProfile import label
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.paperlens.embedding.embedder import EmbeddingModel
 from src.paperlens.embedding.retriever import SemanticRetriever
+from src.paperlens.evaluation.gold import with_expanded_labels
 from src.paperlens.evaluation.metrics import arxiv_ids_from_chunks, chunk_to_arxiv_id
 from src.paperlens.retrieval.bm25 import BM25Retriever
 from src.paperlens.retrieval.hybrid import HybridRetriever
@@ -102,18 +104,20 @@ def expand_entry(
             merged.append(chunk_id)
     merged = merged[:MAX_LABELS]
 
-    return {
-        "query": entry["query"],
-        "relevant_arxiv_ids": sorted(relevant_papers),
-        "relevant_chunk_ids": merged,
-        "expected_answer_summary": entry.get("expected_answer_summary", ""),
-    }
+    return with_expanded_labels(label, merged, sorted(relevant_papers))
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Expand retrieval labels without dropping fields")
+    parser.add_argument("--output", type=Path, default=Path("eval/gold_dataset.expanded.jsonl"))
+    parser.add_argument("--in-place", action="store_true")
+    args = parser.parse_args(argv)
+
     settings = get_settings()
     gold_path = Path(settings.gold_dataset_path)
-    output_path = gold_path
+    output_path = gold_path if args.in_place else args.output
 
     print(f"Loading seed gold dataset from {gold_path}...")
     seed_dataset = load_gold_dataset(gold_path)
