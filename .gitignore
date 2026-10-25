@@ -65,3 +65,11 @@ frontend/dist/
 frontend/build/
 frontend/.vite/
 frontend/.env*.local
+eval/gold_qa_worksheet_extra.jsonl
+eval/gold_backfill_worksheet.jsonl
+eval/gold_candidate_*.jsonl
+eval/gold_candidate_new.jsonl.bak
+eval/gold_dataset.candidate.jsonl
+eval/gold_qa_worksheet.jsonl
+eval/ragas_answers.jsonl
+eval/ragas_baseline.jsonl
