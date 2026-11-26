@@ -24,6 +24,7 @@ from src.paperlens.evaluation.ragas_eval import (
     mean_scores,
     sample_fields,
 )
+from src.paperlens.evaluation.ragas_gate import normalize_score
 
 logger = logging.getLogger("paperlens.eval")
 
@@ -102,7 +103,9 @@ def _append_jsonl(path: Path, record: dict) -> None:
 
 
 def _has_complete_scores(record: dict | None, names: list[str]) -> bool:
-    return record is not None and all(record.get(name) is not None for name in names)
+    return record is not None and all(
+        normalize_score(record.get(name)) is not None for name in names
+    )
 
 
 def _dry_run(args: argparse.Namespace) -> int:

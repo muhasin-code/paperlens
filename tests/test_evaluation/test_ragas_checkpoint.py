@@ -4,6 +4,32 @@ import pytest
 from scripts.evaluate_ragas import _has_complete_scores, _load_or_create_checkpoint
 
 
+@pytest.mark.parametrize(
+    "score",
+    [
+        None,
+        float("nan"),
+        float("inf"),
+        float("-inf"),
+        True,
+        -0.1,
+        1.1,
+    ],
+)
+def test_checkpoint_with_invalid_score_is_not_complete(score):
+    assert not _has_complete_scores(
+        {"faithfulness": score},
+        ["faithfulness"],
+    )
+
+
+def test_checkpoint_with_finite_score_is_complete():
+    assert _has_complete_scores(
+        {"faithfulness": 0.75},
+        ["faithfulness"],
+    )
+
+
 def test_checkpoint_can_be_resumed_with_matching_metadata(tmp_path):
     path = tmp_path / "baseline.checkpoint.jsonl"
     metadata = {"row_ids": ["qa_001"], "retrieval_top_k": 5}
