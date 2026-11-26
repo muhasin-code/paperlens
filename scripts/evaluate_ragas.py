@@ -5,12 +5,15 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import inspect
 import json
 import logging
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+
+from ragas.embeddings.base import BaseRagasEmbedding
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -25,16 +28,15 @@ from src.paperlens.evaluation.ragas_eval import (
 logger = logging.getLogger("paperlens.eval")
 
 
-class BgeQueryEmbeddings:
+class BgeQueryEmbeddings(BaseRagasEmbedding):
     """Ragas embeddings over the already-loaded EmbeddingModel.
 
     Answer relevancy embeds the user question and questions generated from
-    the answer. embed_query applies BGE_QUERY_PREFIX. Do not call embed_chunks.
-    Implements both the collections interface (embed_text) and the legacy one
-    (aembed_query) so a minor Ragas bump does not load a second model.
+    the answer. embed_query applies the BGE query prefix. Do not call embed_chunks.
     """
 
     def __init__(self, model) -> None:
+        super().__init__()
         self._model = model
 
     def embed_text(self, text: str, **kwargs) -> list[float]:
@@ -42,18 +44,6 @@ class BgeQueryEmbeddings:
 
     async def aembed_text(self, text: str, **kwargs) -> list[float]:
         return self.embed_text(text)
-
-    def embed_query(self, text: str) -> list[float]:
-        return self.embed_text(text)
-
-    async def aembed_query(self, text: str) -> list[float]:
-        return self.embed_text(text)
-
-    def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        return self._model.embed_queries(texts)
-
-    async def aembed_documents(self, texts: list[str]) -> list[list[float]]:
-        return self.embed_documents(texts)
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
@@ -64,9 +54,55 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--answers", type=Path, default=None)
     parser.add_argument("--save-answers", type=Path, default=None)
+    parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        default=Path("eval/ragas_baseline.checkpoint.jsonl"),
+        help="Per-row score checkpoint used with --resume.",
+    )
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume from a matching checkpoint and reuse saved answers.",
+    )
     parser.add_argument("--top-k", type=int, default=None)
     parser.add_argument("--allow-langfuse", action="store_true")
     return parser.parse_args(argv)
+
+
+def _load_or_create_checkpoint(path: Path, metadata: dict, *, resume: bool) -> dict[str, dict]:
+    if not path.exists():
+        if resume:
+            raise FileNotFoundError(f"Checkpoint not found: {path}")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("x", encoding="utf-8") as handle:
+            handle.write(json.dumps({"_metadata": metadata}) + "\n")
+        return {}
+    if not resume:
+        raise FileExistsError(
+            f"Checkpoint already exists; pass --resume or choose another path: {path}"
+        )
+
+    with path.open(encoding="utf-8") as handle:
+        lines = [line for line in handle if line.strip()]
+    if not lines or json.loads(lines[0]).get("_metadata") != metadata:
+        raise ValueError(f"Checkpoint metadata does not match this evaluation: {path}")
+
+    records: dict[str, dict] = {}
+    for line in lines[1:]:
+        record = json.loads(line)
+        records[record["id"]] = record
+    return records
+
+
+def _append_jsonl(path: Path, record: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+def _has_complete_scores(record: dict | None, names: list[str]) -> bool:
+    return record is not None and all(record.get(name) is not None for name in names)
 
 
 def _dry_run(args: argparse.Namespace) -> int:
@@ -100,7 +136,14 @@ def _build_metrics(judge_model: str, base_url: str, api_key: str, embedder):
     from ragas.metrics.collections import AnswerRelevancy, ContextPrecision, Faithfulness
 
     client = AsyncOpenAI(api_key=api_key, base_url=base_url, max_retries=5)
-    llm = llm_factory(judge_model, provider="openai", client=client, temperature=0)
+    llm = llm_factory(
+        judge_model,
+        provider="openai",
+        client=client,
+        temperature=0,
+        max_tokens=4096,
+        reasoning_effort="low",
+    )
     embeddings = BgeQueryEmbeddings(embedder)
     faithfulness = Faithfulness(llm=llm)
     relevancy = AnswerRelevancy(llm=llm, embeddings=embeddings)
@@ -156,66 +199,103 @@ async def _run(args: argparse.Namespace) -> int:
     judge_model, base_url, api_key = _judge_config(settings)
     if not base_url or not api_key:
         print(
-            "Refusing to load a local judge. Set RAGAS_JUDGE_MODEL and the Groq "
-            "base URL / API key (LLM_API_BASE_URL, LLM_API_KEY).",
+            "Refusing to load a local judge. Set RAGAS_JUDGE_MODEL and either "
+            "RAGAS_JUDGE_BASE_URL / RAGAS_JUDGE_API_KEY or "
+            "LLM_API_BASE_URL / LLM_API_KEY.",
             file=sys.stderr,
         )
         return 2
-    if "gpt-oss" in judge_model:
-        print(
-            "Refusing gpt-oss as the Ragas judge. llm_factory does not send "
-            "reasoning_effort. Set RAGAS_JUDGE_MODEL=qwen/qwen3-8b.",
-            file=sys.stderr,
-        )
-        return 2
+    # if "gpt-oss" in judge_model:
+    #     print(
+    #         "Refusing gpt-oss as the Ragas judge. llm_factory does not send "
+    #         "reasoning_effort. Set RAGAS_JUDGE_MODEL=qwen/qwen3-8b.",
+    #         file=sys.stderr,
+    #     )
+    #     return 2
 
     gold_path = args.gold or Path(settings.gold_dataset_path)
-    rows = generation_rows(load_gold_dataset(gold_path))
+    all_rows = generation_rows(load_gold_dataset(gold_path))
+    rows = all_rows
     if args.limit is not None:
         rows = rows[: args.limit]
     if not rows:
         print("No generation rows", file=sys.stderr)
         return 1
 
+    metadata = {
+        "dataset_version": "4.3.0",
+        "gold_path": str(gold_path),
+        "gold_sha256": hashlib.sha256(gold_path.read_bytes()).hexdigest(),
+        "row_ids": [row["id"] for row in all_rows],
+        "llm_provider": settings.llm_provider,
+        "llm_model": settings.llm_model or settings.ollama_model,
+        "llm_fallback_model": (
+            settings.llm_fallback_model or settings.llm_model or settings.ollama_model
+        ),
+        "llm_base_url": settings.llm_api_base_url,
+        "judge_model": judge_model,
+        "judge_base_url": base_url,
+        "embedding_model": settings.embedding_model,
+        "retrieval_top_k": args.top_k or settings.retrieval_top_k,
+    }
+    try:
+        scored_by_id = _load_or_create_checkpoint(args.checkpoint, metadata, resume=args.resume)
+    except (FileExistsError, FileNotFoundError, ValueError) as exc:
+        print(exc, file=sys.stderr)
+        return 2
+
     embedder = get_cached_embedding_model(settings)
     metrics = _build_metrics(judge_model, base_url, api_key, embedder)
     names = [metric.name for metric in metrics]
     refusal = PromptLoader(settings).load_prompt().refusal_message
-    answers = _load_answers(args.answers) if args.answers else None
+    answers = _load_answers(args.answers) if args.answers else {}
     rag = None
-    if answers is None:
+    if not args.answers or args.save_answers:
         rag = RAGService(settings, llm_provider=get_llm_provider(settings))
 
-    semaphore = asyncio.Semaphore(2)
-    scored: list[dict] = []
-    answer_lines: list[dict] = []
-    skipped_empty = 0
+    semaphore = asyncio.Semaphore(1)
     log_path = Path("eval/ragas_baseline.jsonl")
 
     for row in rows:
-        if answers is None:
+        prior = scored_by_id.get(row["id"])
+        if _has_complete_scores(prior, names):
+            continue
+
+        saved = answers.get(row["id"])
+        generated = saved is None
+        if saved is not None:
+            answer = saved.get("response") or ""
+            contexts = list(saved.get("retrieved_contexts") or [])
+            chunk_ids = list(saved.get("retrieved_chunk_ids") or [])
+        else:
+            if args.answers and not args.save_answers:
+                print(f"Missing saved answer for {row['id']}", file=sys.stderr)
+                return 1
+            if rag is None:
+                rag = RAGService(settings, llm_provider=get_llm_provider(settings))
             response, contexts = await rag.query_with_contexts(
                 QueryRequest(query=row["query"], top_k=args.top_k)
             )
             answer = response.answer or ""
             chunk_ids = [item.chunk_id for item in (response.citations or [])]
-        else:
-            saved = answers.get(row["id"])
-            if saved is None:
-                print(f"Missing saved answer for {row['id']}", file=sys.stderr)
-                return 1
-            answer = saved.get("response") or ""
-            contexts = list(saved.get("retrieved_contexts") or [])
-            chunk_ids = list(saved.get("retrieved_chunk_ids") or [])
 
         refused = answer.strip() == refusal
+        answer_record = {
+            "id": row["id"],
+            "response": answer,
+            "retrieved_contexts": contexts,
+            "retrieved_chunk_ids": chunk_ids,
+        }
+        if generated and args.save_answers:
+            _append_jsonl(args.save_answers, answer_record)
+            answers[row["id"]] = answer_record
+
         record = {
             "id": row["id"],
             "n_contexts": len(contexts),
             "refused": refused,
         }
         if not contexts:
-            skipped_empty += 1
             record.update(empty_context_scores(names))
         else:
             fields = sample_fields(row, answer, contexts)
@@ -224,24 +304,13 @@ async def _run(args: argparse.Namespace) -> int:
             )
             for name, value in zip(names, values, strict=True):
                 record[name] = value
-        scored.append(record)
-        answer_lines.append(
-            {
-                "id": row["id"],
-                "response": answer,
-                "retrieved_contexts": contexts,
-                "retrieved_chunk_ids": chunk_ids,
-            }
-        )
-        with log_path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(record) + "\n")
+        scored_by_id[row["id"]] = record
+        _append_jsonl(args.checkpoint, record)
+        _append_jsonl(log_path, record)
         print(f"{row['id']} contexts={len(contexts)} refused={refused}")
 
-    if args.save_answers:
-        args.save_answers.parent.mkdir(parents=True, exist_ok=True)
-        with args.save_answers.open("w", encoding="utf-8") as handle:
-            for line in answer_lines:
-                handle.write(json.dumps(line, ensure_ascii=False) + "\n")
+    scored = [scored_by_id[row["id"]] for row in rows]
+    skipped_empty = sum(1 for record in scored if record["n_contexts"] == 0)
 
     import ragas
 

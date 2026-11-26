@@ -1,0 +1,633 @@
+{
+  "dataset_version": "4.3.0",
+  "gold_path": "eval/gold_dataset.jsonl",
+  "n_gold_generation": 75,
+  "n_scored": 75,
+  "n_skipped_empty_context": 0,
+  "limit": null,
+  "llm_provider": "openai_compat",
+  "llm_model": "openai/gpt-oss-120b",
+  "judge_model": "openai/gpt-oss-120b",
+  "embedding_model": "BAAI/bge-large-en-v1.5",
+  "retrieval_top_k": 5,
+  "ragas_version": "0.4.3",
+  "langfuse_enabled": false,
+  "threshold_enforced": false,
+  "created_at": "2026-11-25 16:49:53 UTC",
+  "metrics": {
+    "faithfulness": {
+      "mean": NaN,
+      "n": 75
+    },
+    "answer_relevancy": {
+      "mean": 0.7807253682293578,
+      "n": 75
+    },
+    "context_precision": {
+      "mean": 0.8352777777541278,
+      "n": 75
+    }
+  },
+  "rows": [
+    {
+      "id": "qa_001",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8056106825673374,
+      "context_precision": 0.499999999975
+    },
+    {
+      "id": "qa_002",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.903475549705412,
+      "context_precision": 0.9999999999666667
+    },
+    {
+      "id": "qa_003",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 0.9375,
+      "answer_relevancy": 0.9886648511970811,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_004",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8145018272218252,
+      "context_precision": 0.8333333332916666
+    },
+    {
+      "id": "qa_005",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9358812720365405,
+      "context_precision": 0.7555555555303703
+    },
+    {
+      "id": "qa_006",
+      "n_contexts": 5,
+      "refused": true,
+      "faithfulness": NaN,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "id": "qa_007",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.987848274120199,
+      "context_precision": 0.9999999999
+    },
+    {
+      "id": "qa_008",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8237441178699397,
+      "context_precision": 0.94999999997625
+    },
+    {
+      "id": "qa_009",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9162345935473063,
+      "context_precision": 0.8666666666377778
+    },
+    {
+      "id": "qa_010",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7651383647578706,
+      "context_precision": 0.7499999999625
+    },
+    {
+      "id": "qa_011",
+      "n_contexts": 5,
+      "refused": true,
+      "faithfulness": NaN,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "id": "qa_012",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.941803405883828,
+      "context_precision": 0.0
+    },
+    {
+      "id": "qa_013",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9878080059875881,
+      "context_precision": 0.32499999998375
+    },
+    {
+      "id": "qa_014",
+      "n_contexts": 5,
+      "refused": true,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "id": "qa_015",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 0.7142857142857143,
+      "answer_relevancy": 0.5637761870430401,
+      "context_precision": 0.9999999999
+    },
+    {
+      "id": "qa_016",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8278535625290598,
+      "context_precision": 0.499999999975
+    },
+    {
+      "id": "qa_017",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7829733500917575,
+      "context_precision": 0.19999999998
+    },
+    {
+      "id": "qa_018",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.6655918056548611,
+      "context_precision": 0.699999999965
+    },
+    {
+      "id": "qa_019",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9851675235934888,
+      "context_precision": 0.0
+    },
+    {
+      "id": "qa_020",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9718293582139844,
+      "context_precision": 0.8874999999778125
+    },
+    {
+      "id": "qa_021",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 0.7777777777777778,
+      "answer_relevancy": 0.5254867845417553,
+      "context_precision": 0.6388888888675925
+    },
+    {
+      "id": "qa_022",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 0.8,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "id": "qa_023",
+      "n_contexts": 5,
+      "refused": true,
+      "faithfulness": NaN,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0
+    },
+    {
+      "id": "qa_024",
+      "n_contexts": 5,
+      "refused": true,
+      "faithfulness": NaN,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.9999999999
+    },
+    {
+      "id": "qa_025",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8015473724085288,
+      "context_precision": 0.8041666666465626
+    },
+    {
+      "id": "qa_026",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9475644785321545,
+      "context_precision": 0.9166666666361111
+    },
+    {
+      "id": "qa_027",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9083211445566522,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_028",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": NaN,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_029",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7662926669516231,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_030",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.6991781394239159,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_031",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8956055539820834,
+      "context_precision": 0.6999999999766667
+    },
+    {
+      "id": "qa_032",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9033106897250028,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_033",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8614361416589477,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_034",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8765205942966724,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_035",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9292069916229749,
+      "context_precision": 0.8055555555287036
+    },
+    {
+      "id": "qa_036",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8881739646473094,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_037",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9471529817655228,
+      "context_precision": 0.94999999997625
+    },
+    {
+      "id": "qa_038",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9308105076275294,
+      "context_precision": 0.8874999999778125
+    },
+    {
+      "id": "qa_039",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9036829910386039,
+      "context_precision": 0.94999999997625
+    },
+    {
+      "id": "qa_040",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8370214920403186,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_041",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.901912497236928,
+      "context_precision": 0.999999999975
+    },
+    {
+      "id": "qa_042",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.850553135053557,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_043",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8509740927925694,
+      "context_precision": 0.999999999975
+    },
+    {
+      "id": "qa_044",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 0.9230769230769231,
+      "answer_relevancy": 0.9198117799313992,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_045",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7018536699888679,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_046",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7774996140934962,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_047",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9868332712066706,
+      "context_precision": 0.8874999999778125
+    },
+    {
+      "id": "qa_048",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7340964704394364,
+      "context_precision": 0.999999999975
+    },
+    {
+      "id": "qa_049",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7278036739952846,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_050",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8722548354266745,
+      "context_precision": 0.94999999997625
+    },
+    {
+      "id": "qa_051",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8231233059522487,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_052",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9434546088446488,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_053",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7495959984014976,
+      "context_precision": 0.999999999975
+    },
+    {
+      "id": "qa_054",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9017173689985546,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_055",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7703952919757481,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_056",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9450930247366207,
+      "context_precision": 0.999999999975
+    },
+    {
+      "id": "qa_057",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8456012132652289,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_058",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9101496591368413,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_059",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8540105656076827,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_060",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8452901710382689,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_061",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9495761662638896,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_062",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9121348767820275,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_063",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9468184705825387,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_064",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9318304918865271,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_065",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.870947720909404,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_066",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7432107865213599,
+      "context_precision": 0.8874999999778125
+    },
+    {
+      "id": "qa_067",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8130745247355508,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_068",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7308437374220551,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_069",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9012807518424908,
+      "context_precision": 0.999999999975
+    },
+    {
+      "id": "qa_070",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9724231663197895,
+      "context_precision": 0.999999999975
+    },
+    {
+      "id": "qa_071",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9149983449004345,
+      "context_precision": 0.999999999975
+    },
+    {
+      "id": "qa_072",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9284060106589686,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_073",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.933474257712476,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_074",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8862563430408019,
+      "context_precision": 0.99999999998
+    },
+    {
+      "id": "qa_075",
+      "n_contexts": 5,
+      "refused": false,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9178874926605879,
+      "context_precision": 0.99999999998
+    }
+  ]
+}

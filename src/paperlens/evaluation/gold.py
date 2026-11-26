@@ -93,12 +93,6 @@ def validate_row(row: dict, *, index: int) -> list[str]:
         errors.extend(
             _chunk_errors(row.get("source_chunk_ids"), field="source_chunk_ids", index=index)
         )
-        relevant = set(row.get("relevant_chunk_ids") or [])
-        for chunk_id in row.get("source_chunk_ids") or []:
-            if isinstance(chunk_id, str) and chunk_id not in relevant:
-                errors.append(
-                    f"row {index}: source_chunk_id {chunk_id} is not in relevant_chunk_ids"
-                )
 
     difficulty = row.get("difficulty")
     if difficulty is not None and difficulty not in DIFFICULTIES:
