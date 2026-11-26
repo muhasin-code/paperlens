@@ -13,7 +13,7 @@ logger = logging.getLogger("paperlens.llm")
 
 
 class OpenAICompatProvider(LLMProvider):
-    """Provider for OpenAI-compatible endpoints (Groq, OpenRouter, etc.)."""
+    """Provider for OpenAI-compatible endpoints (Groq, OpenRouter, Gemini, etc.)."""
 
     def __init__(
         self,
@@ -74,7 +74,7 @@ class OpenAICompatProvider(LLMProvider):
         message = choice.get("message") or {}
         content = message.get("content") or ""
         logger.info(
-            "Groq finish_reason=%s content_chars=%d model=%s",
+            "OpenAI-compatible finish_reason=%s content_chars=%d model=%s",
             choice.get("finish_reason"),
             len(content),
             model,
@@ -82,7 +82,10 @@ class OpenAICompatProvider(LLMProvider):
         if not content.strip():
             # Reasoning models sometimes return the answer only in `reasoning`.
             content = message.get("reasoning") or ""
-            logger.warning("Groq content empty; using reasoning field (%d chars)", len(content))
+            logger.warning(
+                "OpenAI-compatible content empty; using reasoning field (%d chars)",
+                len(content),
+            )
         return content
 
     async def stream(

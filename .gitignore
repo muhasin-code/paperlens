@@ -73,3 +73,5 @@ eval/gold_dataset.candidate.jsonl
 eval/gold_qa_worksheet.jsonl
 eval/ragas_answers.jsonl
 eval/ragas_baseline.jsonl
+eval/*.checkpoint.jsonl
+eval/gold_dataset.jsonl.pre-step1-backup
