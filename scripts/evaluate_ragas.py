@@ -21,10 +21,15 @@ from src.paperlens.evaluation.gold import load_gold_dataset
 from src.paperlens.evaluation.ragas_eval import (
     empty_context_scores,
     generation_rows,
-    mean_scores,
     sample_fields,
 )
-from src.paperlens.evaluation.ragas_gate import normalize_score
+from src.paperlens.evaluation.ragas_gate import (
+    evaluate_faithfulness_gate,
+    normalize_score,
+    summarize_metric,
+)
+
+EXPECTED_CI_GENERATION_ROWS = 75
 
 logger = logging.getLogger("paperlens.eval")
 
@@ -47,11 +52,28 @@ class BgeQueryEmbeddings(BaseRagasEmbedding):
         return self.embed_text(text)
 
 
+def _positive_int(value: str) -> int:
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be a positive integer") from exc
+
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("must be a positive integer")
+    return parsed
+
+
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Ragas baseline for generation gold")
+    parser = argparse.ArgumentParser(description="Ragas evaluation for generation gold")
     parser.add_argument("--gold", type=Path, default=None)
-    parser.add_argument("--output", type=Path, default=Path("eval/ragas_baseline.json"))
-    parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--output", type=Path, default=None)
+    parser.add_argument("--limit", type=_positive_int, default=None)
+    parser.add_argument(
+        "--fail-under",
+        type=float,
+        default=None,
+        help="Enforce the faithfulness threshold and require complete score coverage.",
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--answers", type=Path, default=None)
     parser.add_argument("--save-answers", type=Path, default=None)
@@ -66,9 +88,61 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="store_true",
         help="Resume from a matching checkpoint and reuse saved answers.",
     )
-    parser.add_argument("--top-k", type=int, default=None)
+    parser.add_argument("--top-k", type=_positive_int, default=None)
     parser.add_argument("--allow-langfuse", action="store_true")
-    return parser.parse_args(argv)
+
+    args = parser.parse_args(argv)
+
+    if args.fail_under is not None and normalize_score(args.fail_under) is None:
+        parser.error("--fail-under must be a finite number in [0, 1]")
+
+    if args.output is None:
+        args.output = Path(
+            "eval/ragas_ci_result.json"
+            if args.fail_under is not None
+            else "eval/ragas_baseline.json"
+        )
+
+    return args
+
+
+def _standardize_scored_rows(scored: list[dict], names: list[str]) -> list[dict]:
+    rows: list[dict] = []
+    for record in scored:
+        safe_record = {
+            "id": record.get("id"),
+            "n_contexts": record.get("n_contexts"),
+            "refused": record.get("refused"),
+        }
+        for name in names:
+            safe_record[name] = normalize_score(record.get(name))
+        rows.append(safe_record)
+    return rows
+
+
+def _summarize_results(
+    scored: list[dict],
+    names: list[str],
+    *,
+    expected_rows: int,
+    threshold: float | None,
+) -> tuple[list[dict], dict[str, dict], dict | None, int]:
+    safe_rows = _standardize_scored_rows(scored, names)
+    summaries = {name: summarize_metric(safe_rows, name, expected_rows) for name in names}
+
+    if threshold is None:
+        return safe_rows, summaries, None, 0
+
+    faithfulness = summaries.get("faithfulness")
+    if faithfulness is None:
+        raise RuntimeError("Ragas did not produce a faithfulness metric")
+
+    gate = evaluate_faithfulness_gate(
+        faithfulness,
+        threshold=threshold,
+        expected_rows=expected_rows,
+    )
+    return safe_rows, summaries, gate, 0 if gate["gate_passed"] else 1
 
 
 def _load_or_create_checkpoint(path: Path, metadata: dict, *, resume: bool) -> dict[str, dict]:
@@ -99,7 +173,7 @@ def _load_or_create_checkpoint(path: Path, metadata: dict, *, resume: bool) -> d
 def _append_jsonl(path: Path, record: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+        handle.write(json.dumps(record, ensure_ascii=False, allow_nan=False) + "\n")
 
 
 def _has_complete_scores(record: dict | None, names: list[str]) -> bool:
@@ -163,18 +237,27 @@ async def _score_metric(metric, fields: dict, semaphore: asyncio.Semaphore):
     params = inspect.signature(metric.ascore).parameters
     kwargs = {name: fields[name] for name in params if name in fields}
     delay = 2.0
+
     async with semaphore:
         for attempt in range(3):
             try:
                 result = await metric.ascore(**kwargs)
+                if result.value is None:
+                    return None
                 return float(result.value)
             except Exception as exc:
-                logger.warning("%s attempt %d failed: %s", metric.name, attempt + 1, exc)
+                logger.warning(
+                    "%s attempt %d failed (%s)",
+                    metric.name,
+                    attempt + 1,
+                    type(exc).__name__,
+                )
                 if attempt == 2:
-                    return None
+                    raise RuntimeError(f"{metric.name} scoring failed after 3 attempts") from exc
                 await asyncio.sleep(delay)
                 delay *= 2
-    return None
+
+    raise RuntimeError(f"{metric.name} scoring failed")
 
 
 def _load_answers(path: Path) -> dict[str, dict]:
@@ -218,12 +301,30 @@ async def _run(args: argparse.Namespace) -> int:
 
     gold_path = args.gold or Path(settings.gold_dataset_path)
     all_rows = generation_rows(load_gold_dataset(gold_path))
-    rows = all_rows
-    if args.limit is not None:
-        rows = rows[: args.limit]
-    if not rows:
+
+    if not all_rows:
         print("No generation rows", file=sys.stderr)
-        return 1
+        return 2
+
+    if args.fail_under is not None:
+        if len(all_rows) != EXPECTED_CI_GENERATION_ROWS:
+            print(
+                f"Gate requires exactly {EXPECTED_CI_GENERATION_ROWS} generation rows; "
+                f"found {len(all_rows)}",
+                file=sys.stderr,
+            )
+            return 2
+        if args.limit is not None and args.limit < len(all_rows):
+            print(
+                "--limit cannot be used to run a partial fail-under evaluation",
+                file=sys.stderr,
+            )
+            return 2
+
+    rows = all_rows if args.limit is None else all_rows[: args.limit]
+    if not rows:
+        print("No rows selected for evaluation", file=sys.stderr)
+        return 2
 
     metadata = {
         "dataset_version": "4.3.0",
@@ -306,59 +407,89 @@ async def _run(args: argparse.Namespace) -> int:
                 *[_score_metric(metric, fields, semaphore) for metric in metrics]
             )
             for name, value in zip(names, values, strict=True):
-                record[name] = value
+                record[name] = normalize_score(value)
         scored_by_id[row["id"]] = record
         _append_jsonl(args.checkpoint, record)
         _append_jsonl(log_path, record)
         print(f"{row['id']} contexts={len(contexts)} refused={refused}")
 
     scored = [scored_by_id[row["id"]] for row in rows]
-    skipped_empty = sum(1 for record in scored if record["n_contexts"] == 0)
+    # skipped_empty = sum(1 for record in scored if record["n_contexts"] == 0)
+
+    expected_rows = len(rows)
+    safe_rows, metric_summaries, gate, exit_code = _summarize_results(
+        scored,
+        names,
+        expected_rows=expected_rows,
+        threshold=args.fail_under,
+    )
+    faithfulness = metric_summaries["faithfulness"]
 
     import ragas
 
     payload = {
         "dataset_version": "4.3.0",
-        "gold_path": str(gold_path),
-        "n_gold_generation": len(generation_rows(load_gold_dataset(gold_path))),
+        "n_gold_generation": len(all_rows),
         "n_scored": len(scored),
-        "n_skipped_empty_context": skipped_empty,
+        "n_valid": faithfulness["n_valid"],
+        "n_invalid": faithfulness["n_invalid"],
+        "invalid_ids": faithfulness["invalid_ids"],
+        "threshold": args.fail_under,
+        "threshold_enforced": args.fail_under is not None,
+        "coverage_ratio": faithfulness["coverage_ratio"],
+        "gate_passed": gate["gate_passed"] if gate is not None else None,
+        "gate": gate,
         "limit": args.limit,
-        "llm_provider": settings.llm_provider,
-        "llm_model": settings.llm_model or settings.ollama_model,
-        "judge_model": judge_model,
-        "embedding_model": settings.embedding_model,
         "retrieval_top_k": args.top_k or settings.retrieval_top_k,
         "ragas_version": ragas.__version__,
         "langfuse_enabled": False,
-        "threshold_enforced": False,
         "created_at": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
-        "metrics": mean_scores(scored, names),
-        "rows": scored,
+        "metrics": metric_summaries,
+        "rows": safe_rows,
     }
+
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    args.output.write_text(
+        json.dumps(payload, indent=2, allow_nan=False),
+        encoding="utf-8",
+    )
     print(f"Wrote {args.output}")
-    print(json.dumps(payload["metrics"], indent=2))
-    return 0
+    print(json.dumps(payload["metrics"], indent=2, allow_nan=False))
+
+    if gate is not None and not gate["gate_passed"]:
+        print(
+            f"Faithfulness gate failed: reason={gate['reason']} "
+            f"mean={gate['mean']} threshold={gate['threshold']} "
+            f"valid={gate['n_valid']}/{gate['n_expected']}",
+            file=sys.stderr,
+        )
+
+    return exit_code
 
 
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO)
     args = _parse_args(argv)
+
     if args.dry_run:
         return _dry_run(args)
-    from src.paperlens.settings import get_settings
 
-    settings = get_settings()
-    if settings.langfuse_enabled and not args.allow_langfuse:
-        print(
-            "Refusing to score with Langfuse enabled. "
-            "Run via make eval-ragas or pass --allow-langfuse.",
-            file=sys.stderr,
-        )
+    try:
+        from src.paperlens.settings import get_settings
+
+        settings = get_settings()
+        if settings.langfuse_enabled and not args.allow_langfuse:
+            print(
+                "Refusing to score with Langfuse enabled. "
+                "Run via make eval-ragas or pass --allow-langfuse.",
+                file=sys.stderr,
+            )
+            return 2
+
+        return asyncio.run(_run(args))
+    except Exception as exc:
+        logger.error("Evaluation failed (%s)", type(exc).__name__)
         return 2
-    return asyncio.run(_run(args))
 
 
 if __name__ == "__main__":
