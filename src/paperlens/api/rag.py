@@ -52,6 +52,11 @@ def _get_embedding_model(settings: Settings) -> EmbeddingModel:
     return _embedding_model_cache
 
 
+def get_cached_embedding_model(settings: Settings) -> EmbeddingModel:
+    """Return the process-wide EmbeddingModel. Used by Ragas runner."""
+    return _get_embedding_model(settings=settings)
+
+
 # Module-level singleton for Langfuse Observablity
 _observer = None
 
@@ -145,6 +150,15 @@ class RAGService:
 
     async def query(self, request: QueryRequest) -> QueryResponse:
         """Execute the full RAG pipeline for a single query."""
+        response, _contexts = await self.query_with_contexts(request)
+        return response
+
+    async def query_with_contexts(self, request: QueryRequest) -> tuple[QueryResponse, list[str]]:
+        """query() plus the chunk texts the prompt saw, in rank order.
+
+        Not used by routes.py. citations is empty on refusal; the text list
+        is not. Empty retrieval returns contexts=[].
+        """
         total_start = time.perf_counter()
         observer = self._observer
 
@@ -176,13 +190,13 @@ class RAGService:
                 user_id=None,
                 metadata={"query_length": len(request.query)},
             ) as trace:
-                # 1) Retrieval (Hybrid RRF only - reranker disabled per M2.5 benchmark)
                 retrieval_start = time.perf_counter()
                 results: list[RetrievalResult] = self.retriever.search(
                     query=request.query, top_k=request.top_k
                 )
                 retrieval_time_ms = (time.perf_counter() - retrieval_start) * 1000
                 track_latency("retrieval", retrieval_time_ms)
+                contexts = [r.chunk.text for r in results]
 
                 if not results:
                     total_time_ms = (time.perf_counter() - total_start) * 1000
@@ -202,12 +216,9 @@ class RAGService:
                         len(results),
                         [f"{r.chunk.chunk_id} | {r.chunk.title[:80]}" for r in results],
                     )
-                    return _finish(trace, resp, cited=False, confidence=0.0)
+                    return _finish(trace, resp, cited=False, confidence=0.0), contexts
 
-                # 2) Context assembly
                 context = self._assemble_context(results)
-
-                # 3) LLM generation (with fallback)
                 generation_start = time.perf_counter()
                 gen_result = await self._generate_with_fallback(
                     request.query, context, request.model
@@ -217,7 +228,6 @@ class RAGService:
                 track_tokens(
                     self.primary_model, len(context.split()) + len(gen_result.text.split())
                 )
-
                 total_time_ms = (time.perf_counter() - total_start) * 1000
                 track_latency("rag.total", total_time_ms)
 
@@ -233,20 +243,14 @@ class RAGService:
                         generation_time_ms=generation_time_ms,
                         total_time_ms=total_time_ms,
                     )
-                    return _finish(trace, resp, cited=False, confidence=0.0)
+                    return _finish(trace, resp, cited=False, confidence=0.0), contexts
 
-                # 4) Build citations from retrieval results
                 citations = self._build_citations(results)
                 is_cited = len(citations) > 0
                 track_citation(is_cited)
-
-                if results:
-                    top_scores = [r.score for r in results[:3]]
-                    confidence = max(0.0, min(1.0, sum(top_scores) / len(top_scores)))
-                else:
-                    confidence = 0.0
+                top_scores = [r.score for r in results[:3]]
+                confidence = max(0.0, min(1.0, sum(top_scores) / len(top_scores)))
                 track_confidence(confidence)
-
                 resp = QueryResponse(
                     mode="conversational",
                     answer=gen_result.text.strip(),
@@ -256,13 +260,12 @@ class RAGService:
                     generation_time_ms=generation_time_ms,
                     total_time_ms=total_time_ms,
                 )
-                return _finish(trace, resp, cited=is_cited, confidence=confidence)
+                return _finish(trace, resp, cited=is_cited, confidence=confidence), contexts
         except Exception:
             track_citation(False)
             track_confidence(0.0)
             raise
         finally:
-            # Span is closed by the `with` before this runs, including on return.
             if observer.enabled:
                 observer.flush()
 

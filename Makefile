@@ -115,6 +115,22 @@ eval-retrieval:
 	@echo "   This runs in HEADLESS MODE (no Ollama/LLM required)."
 	python scripts/evaluate_retrieval.py
 
+validate-gold-schema:
+	@echo "-> Validating gold schema only (no Chroma)..."
+	LANGFUSE_ENABLED=false python scripts/validate_gold_dataset.py --schema-only --min-generation 75
+
+validate-gold:
+	@echo "-> Validating gold schema and Chroma chunk ids..."
+	LANGFUSE_ENABLED=false python scripts/validate_gold_dataset.py --min-generation 75
+
+eval-ragas-dry:
+	@echo "-> Ragas dry run (no model, no network)..."
+	LANGFUSE_ENABLED=false python scripts/evaluate_ragas.py --dry-run --limit 2
+
+eval-ragas:
+	@echo "-> Ragas baseline. Groq for generation and judge. BGE stays local."
+	LANGFUSE_ENABLED=false python scripts/evaluate_ragas.py
+
 
 # ─── Extraction Dataset (Phase 3) ───────────────────────────────────────────────
 
@@ -248,6 +264,10 @@ help:
 	@echo "  make reranker-verify    Smoke-test: cross-encoder reranking"
 	@echo "  make prompt-verify      Smoke-test: prompt loader"
 	@echo "  make eval-retrieval      Run full retrieval benchmark (baseline vs hybrid vs hybrid+reranker)"
+	@echo "  make validate-gold-schema   Validate gold JSONL without opening Chroma"
+	@echo "  make validate-gold          Validate gold JSONL and Chroma chunk ids"
+	@echo "  make eval-ragas-dry         Print two generation rows and exit"
+	@echo "  make eval-ragas             Score generation gold with Ragas"
 	@echo "  make build-extraction-dataset  Build extraction dataset (API annotation)"
 	@echo "  make build-extraction-dry      Dry run: annotate 5 examples, no writes"
 	@echo "  make validate-extraction-dataset Validate dataset integrity"

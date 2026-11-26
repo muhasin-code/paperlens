@@ -136,7 +136,7 @@ RetrievalResult[]             # ranked by score = 1 - cosine_distance
 - **No cross-encoder reranking** — top-5 from dense search are passed directly to the LLM. Phase 2 introduces `cross-encoder/ms-marco-MiniLM-L-12-v2` reranking.
 - **Static index** — index is rebuilt only via `--rebuild`. No incremental updates for new arXiv papers yet.
 - **Section-awareness is metadata-only** — retrieval does not yet boost by section type (e.g., prefer `method` over `related-work`).
-- **No evaluation harness** — this document is the only quantitative record. Phase 4 introduces Ragas on a gold dataset (`eval/gold_dataset.jsonl`).
+- **Separate evaluation sets** — retrieval metrics remain documented in `docs/evaluation/retrieval-metrics.md`. The shared gold file also contains generation references, and its local Ragas baseline is documented in `docs/evaluation/gold-dataset.md`.
 
 ---
 

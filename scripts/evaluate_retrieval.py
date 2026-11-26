@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.paperlens.embedding.embedder import EmbeddingModel
 from src.paperlens.embedding.retriever import SemanticRetriever
+from src.paperlens.evaluation.gold import is_retrieval_row
 from src.paperlens.evaluation.metrics import compute_retrieval_metrics
 from src.paperlens.retrieval.hybrid import HybridRetriever
 from src.paperlens.retrieval.reranker import CrossEncoderReranker
@@ -314,12 +315,30 @@ def _print_summary(stats: dict[str, Any]) -> None:
         print(f"  {strategy:<20} {_format_pct(delta)}")
 
 
-def main() -> int:
-    settings = get_settings()
+def main(argv: list[str] | None = None) -> int:
+    import argparse
 
-    print(f"Loading gold evaluation dataset from {settings.gold_dataset_path}...")
-    gold_dataset = load_gold_dataset(settings.gold_dataset_path)
-    print(f"Loaded {len(gold_dataset)} queries")
+    parser = argparse.ArgumentParser(description="Retrieval benchmark on retrieval gold rows")
+    parser.add_argument(
+        "--list-queries",
+        action="store_true",
+        help="Print retrieval-set queries and exit before loading models",
+    )
+    args = parser.parse_args(argv)
+
+    settings = get_settings()
+    print(f"Loading gold evaluation dataset from {settings.gold_dataset_path}...", file=sys.stderr)
+    all_rows = load_gold_dataset(settings.gold_dataset_path)
+    gold_dataset = [row for row in all_rows if is_retrieval_row(row)]
+    skipped = len(all_rows) - len(gold_dataset)
+    print(
+        f"Scoring {len(gold_dataset)} retrieval rows (skipped {skipped} non-retrieval)",
+        file=sys.stderr,
+    )
+    if args.list_queries:
+        for row in gold_dataset:
+            print(row["query"])
+        return 0
 
     print("\nInitializing retrievers...")
     embedder = EmbeddingModel(settings)

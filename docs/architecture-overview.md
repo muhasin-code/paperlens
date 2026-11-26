@@ -69,9 +69,10 @@ instrumentation (Phase 4) for tracing.
 
 ### Evaluation & CI (Phase 4)
 
-A gold dataset of 75 curated QA pairs lives in `eval/gold_dataset.jsonl`. GitHub Actions
-runs Ragas (faithfulness, answer relevancy, context precision) against this dataset on
-every PR. A faithfulness score below 0.75 fails the build.
+Generation gold and a local Ragas baseline are documented in
+`docs/evaluation/gold-dataset.md`. The same JSONL file still holds the
+Milestone 2.5 retrieval labels. GitHub Actions does not run Ragas yet.
+Failing the build when faithfulness drops below 0.75 is Milestone 4.4.
 
 ---
 

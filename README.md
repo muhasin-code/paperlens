@@ -3,7 +3,7 @@
 Status
 License
 
-Production-grade research intelligence over ML/AI arXiv papers — hybrid retrieval, fine-tuned structured extraction, Langfuse observability, and Ragas CI evaluation gating.
+Production-grade research intelligence over ML/AI arXiv papers — hybrid retrieval, fine-tuned structured extraction, Langfuse observability, and local Ragas evaluation.
 
 > **Note:** Phase 1 (Core RAG Pipeline) is complete.
 
@@ -88,7 +88,7 @@ Per-query soft nDCG@5 (0.5 credit for same-paper chunks) confirms: hybrid scores
 
 ### Files
 
-- `eval/gold_dataset.jsonl`: Gold evaluation dataset (26 queries, 5–15 chunk labels each, with `relevant_arxiv_ids` for paper-level metrics)
+- `eval/gold_dataset.jsonl`: 75-row gold dataset; retrieval evaluation uses the 26 rows marked `retrieval` in `eval_sets` (10 chunk labels each), while generation evaluation uses all 75 rows. See [the dataset and Ragas baseline documentation](docs/evaluation/gold-dataset.md).
 - `scripts/evaluate_retrieval.py`: Headless evaluation script (4 strategies, 7 metrics including soft nDCG)
 - `scripts/discover_relevant_chunks.py`: Semantic + BM25 discovery for gold set construction
 - `scripts/expand_gold_dataset.py`: Pool-depth-corrected label expansion (interleaved, top-50 pool)

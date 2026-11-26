@@ -1,86 +1,98 @@
 #!/usr/bin/env python3
-"""Validate gold dataset: all chunk IDs must exist in ChromaDB."""
+"""Validate gold dataset schema, and chunk ids against Chroma when requested."""
 
-import json
+import argparse
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.paperlens.embedding.vector_store import VectorStore
+from src.paperlens.evaluation.gold import load_gold_dataset, validate_dataset
 from src.paperlens.settings import get_settings
 
 
-def load_gold_dataset(path: Path):
-    data = []
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                data.append(json.loads(line))
-    return data
+def _chunk_ids(rows: list[dict]) -> list[str]:
+    found: list[str] = []
+    seen: set[str] = set()
+    for item in rows:
+        for key in ("relevant_chunk_ids", "source_chunk_ids"):
+            for chunk_id in item.get(key) or []:
+                if chunk_id not in seen:
+                    seen.add(chunk_id)
+                    found.append(chunk_id)
+    return found
 
 
-def main():
+def _check_chroma(rows: list[dict]) -> list[str]:
+    from src.paperlens.embedding.vector_store import VectorStore
+
     settings = get_settings()
-    gold_path = Path(settings.gold_dataset_path)
-
-    print(f"Loading gold dataset from {gold_path}...")
-    gold_dataset = load_gold_dataset(gold_path)
-    print(f"Loaded {len(gold_dataset)} queries")
-
-    print("Connecting to ChromaDB...")
     store = VectorStore(settings)
-
-    all_chunk_ids = set()
-    missing = []
-
-    for item in gold_dataset:
-        for chunk_id in item.get("relevant_chunk_ids", []):
-            all_chunk_ids.add(chunk_id)
-
-    print(f"Checking {len(all_chunk_ids)} unique chunk IDs...")
-
-    # Batch check
+    missing: list[str] = []
+    chunk_ids = _chunk_ids(rows)
+    print(f"Checking {len(chunk_ids)} unique chunk IDs...")
     batch_size = 100
-    chunk_id_list = list(all_chunk_ids)
-
-    for i in range(0, len(chunk_id_list), batch_size):
-        batch = chunk_id_list[i : i + batch_size]
+    for start in range(0, len(chunk_ids), batch_size):
+        batch = chunk_ids[start : start + batch_size]
         try:
             result = store.collection.get(ids=batch, include=[])
             found_ids = set(result["ids"])
-            for cid in batch:
-                if cid not in found_ids:
-                    missing.append(cid)
-        except Exception as e:
-            print(f"Error checking batch: {e}")
+        except Exception as exc:
+            print(f"Error checking batch: {exc}")
             missing.extend(batch)
+            continue
+        for chunk_id in batch:
+            if chunk_id not in found_ids:
+                missing.append(chunk_id)
 
+    arxiv_ids: set[str] = set()
+    for item in rows:
+        for arxiv_id in item.get("relevant_arxiv_ids") or []:
+            arxiv_ids.add(arxiv_id)
+    if arxiv_ids:
+        print(f"\nChecking {len(arxiv_ids)} arXiv IDs...")
+        for arxiv_id in sorted(arxiv_ids):
+            result = store.collection.get(where={"arxiv_id": arxiv_id}, limit=1, include=[])
+            if not result["ids"]:
+                print(f"   No chunks found for arXiv ID: {arxiv_id}")
+            else:
+                print(f"   {arxiv_id} - {len(result['ids'])} chunks found")
+    return missing
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Validate eval/gold_dataset.jsonl")
+    parser.add_argument("--schema-only", action="store_true")
+    parser.add_argument("--min-generation", type=int, default=75)
+    parser.add_argument("--gold", type=Path, default=None)
+    args = parser.parse_args(argv)
+
+    settings = get_settings()
+    gold_path = args.gold or Path(settings.gold_dataset_path)
+    print(f"Loading gold dataset from {gold_path}...")
+    rows = load_gold_dataset(gold_path)
+    print(f"Loaded {len(rows)} queries")
+
+    errors = validate_dataset(rows, min_generation=args.min_generation)
+    if errors:
+        print("SCHEMA VALIDATION FAILED:")
+        for error in errors:
+            print(f"  - {error}")
+        return 1
+    print("Schema validation passed")
+    if args.schema_only:
+        return 0
+
+    print("Connecting to ChromaDB...")
+    missing = _check_chroma(rows)
     if missing:
         print(f"\n VALIDATION FAILED: {len(missing)} chunk IDs NOT FOUND in ChromaDB:")
-        for cid in missing:
-            print(f"  - {cid}")
-        sys.exit(1)
-    else:
-        print(f"\n VALIDATION PASSED: All {len(all_chunk_ids)} chunk IDs exist in ChromaDB")
-
-        # Also check paper-level IDs if present
-        arxiv_ids = set()
-        for item in gold_dataset:
-            for arxiv_id in item.get("relevant_arxiv_ids", []):
-                arxiv_ids.add(arxiv_id)
-
-        if arxiv_ids:
-            print(f"\nChecking {len(arxiv_ids)} arXiv IDs...")
-            # Query for papers
-            for arxiv_id in arxiv_ids:
-                result = store.collection.get(where={"arxiv_id": arxiv_id}, limit=1, include=[])
-                if not result["ids"]:
-                    print(f"   No chunks found for arXiv ID: {arxiv_id}")
-                else:
-                    print(f"   {arxiv_id} - {len(result['ids'])} chunks found")
+        for chunk_id in missing:
+            print(f"  - {chunk_id}")
+        return 1
+    print("\n VALIDATION PASSED: chunk IDs exist in ChromaDB")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

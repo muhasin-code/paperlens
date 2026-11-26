@@ -19,7 +19,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", ".env.local"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -80,6 +80,9 @@ class Settings(BaseSettings):
     # ── Evaluation (Phase 4) ────────────────────────────────────────────────
     ragas_faithfulness_threshold: float = 0.75
     gold_dataset_path: Path = Field(default=Path("./eval/gold_dataset.jsonl"))
+    ragas_judge_model: str = ""
+    ragas_judge_base_url: str = ""
+    ragas_judge_api_key: str = ""
 
     # ── Extraction Dataset (Phase 5) ────────────────────────────────────────────────
     extraction_max_examples: int = 2000
